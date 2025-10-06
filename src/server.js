@@ -31,7 +31,7 @@ app.use('/public', express.static(path.join(__dirname, '..', 'public')));
 // health endpoint
 app.get('/health', (req, res) => res.json({ ok: true }));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 // Initialize the server
 const startServer = async () => {

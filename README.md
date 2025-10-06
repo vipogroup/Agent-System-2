@@ -49,6 +49,21 @@ npm run dev
 - **מנהל:** `http://localhost:3000/public/dashboard-admin.html`
 - **סוכן:** `http://localhost:3000/public/dashboard-agent.html`
 
+## 🌐 **פריסה בענן (Render)**
+
+המערכת מוכנה לפריסה מיידית ב-Render:
+
+1. **התחבר ל-[Render](https://render.com)**
+2. **צור Web Service חדש**
+3. **חבר את הרפוזיטורי:** `https://github.com/vipogroup/Agent-System-2`
+4. **Render יזהה אוטומטית** את קובץ `render.yaml`
+5. **לחץ Deploy** - המערכת תהיה זמינה תוך דקות!
+
+### **אחרי הפריסה:**
+- **כתובת ציבורית:** `https://your-app-name.onrender.com`
+- **מנהל:** `https://your-app-name.onrender.com/public/dashboard-admin.html`
+- **סוכן:** `https://your-app-name.onrender.com/public/dashboard-agent.html`
+
 ## קבצים חשובים
 - `src/server.js` – נקודת כניסה.
 - `src/db.js` – אתחול SQLite + סכימה אוטומטית.

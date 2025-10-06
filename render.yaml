@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: agent-system
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 10000
+      - key: COMMISSION_RATE
+        value: 0.10
+      - key: CLEAR_WINDOW_DAYS
+        value: 14
+      - key: COOKIE_TTL_DAYS
+        value: 30
