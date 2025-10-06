@@ -23,8 +23,8 @@ async function createAdmin() {
     
     await new Promise((resolve, reject) => {
       db.run(
-        'INSERT INTO agents (full_name, email, password, role, is_active, referral_code) VALUES (?, ?, ?, ?, ?, ?)',
-        ['Admin User', 'admin@example.com', hashedPassword, 'admin', 1, 'ADMIN001'],
+        'INSERT INTO agents (name, email, password, role, status) VALUES (?, ?, ?, ?, ?)',
+        ['Admin User', 'admin@example.com', hashedPassword, 'admin', 'active'],
         function(err) {
           if (err) reject(err);
           else resolve(this.lastID);
