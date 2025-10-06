@@ -2,6 +2,105 @@ import { getDB } from './db.js';
 import { authRequired, adminOnly } from './auth.js';
 
 export function registerAdminRoutes(app){
+  // Admin dashboard data
+  app.get('/api/admin/dashboard', authRequired, adminOnly, async (req, res) => {
+    try {
+      const db = await getDB();
+      
+      // Get statistics
+      const activeAgents = await db.get(`SELECT COUNT(*) as count FROM agents WHERE is_active = 1`);
+      const pendingAgents = await db.get(`SELECT COUNT(*) as count FROM agents WHERE is_active = 0`);
+      const totalCommissions = await db.get(`SELECT SUM(amount) as total FROM commissions`);
+      const payoutRequests = await db.get(`SELECT COUNT(*) as count FROM payouts WHERE status = 'REQUESTED'`);
+      
+      // Get agents data
+      const agents = await db.all(`
+        SELECT 
+          id, 
+          email, 
+          full_name as name, 
+          is_active,
+          (SELECT SUM(amount) FROM commissions WHERE agent_id = agents.id) as totalCommissions
+        FROM agents 
+        ORDER BY created_at DESC
+      `);
+      
+      // Get payouts data
+      const payouts = await db.all(`
+        SELECT 
+          p.id,
+          p.amount,
+          p.requested_at as requestDate,
+          p.status,
+          a.full_name as agentName
+        FROM payouts p
+        JOIN agents a ON p.agent_id = a.id
+        WHERE p.status = 'REQUESTED'
+        ORDER BY p.requested_at DESC
+      `);
+      
+      // Format agent status
+      const formattedAgents = agents.map(agent => ({
+        ...agent,
+        status: agent.is_active ? 'active' : 'pending',
+        totalCommissions: agent.totalCommissions || 0
+      }));
+      
+      res.json({
+        stats: {
+          activeAgents: activeAgents.count || 0,
+          pendingAgents: pendingAgents.count || 0,
+          totalCommissions: totalCommissions.total || 0,
+          payoutRequests: payoutRequests.count || 0
+        },
+        agents: formattedAgents,
+        payouts: payouts
+      });
+    } catch (error) {
+      console.error('Admin dashboard error:', error);
+      res.status(500).json({ error: 'Failed to load dashboard data' });
+    }
+  });
+
+  // Approve agent
+  app.post('/api/admin/agents/:id/approve', authRequired, adminOnly, async (req, res) => {
+    try {
+      const agentId = parseInt(req.params.id);
+      const db = await getDB();
+      await db.run(`UPDATE agents SET is_active = 1 WHERE id = ?`, [agentId]);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Approve agent error:', error);
+      res.status(500).json({ error: 'Failed to approve agent' });
+    }
+  });
+
+  // Block agent
+  app.post('/api/admin/agents/:id/block', authRequired, adminOnly, async (req, res) => {
+    try {
+      const agentId = parseInt(req.params.id);
+      const db = await getDB();
+      await db.run(`UPDATE agents SET is_active = 0 WHERE id = ?`, [agentId]);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Block agent error:', error);
+      res.status(500).json({ error: 'Failed to block agent' });
+    }
+  });
+
+  // Approve payout
+  app.post('/api/admin/payouts/:id/approve', authRequired, adminOnly, async (req, res) => {
+    try {
+      const payoutId = parseInt(req.params.id);
+      const db = await getDB();
+      await db.run(`UPDATE payouts SET status = 'APPROVED' WHERE id = ?`, [payoutId]);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Approve payout error:', error);
+      res.status(500).json({ error: 'Failed to approve payout' });
+    }
+  });
+
   app.get('/admin/payouts/pending', authRequired, adminOnly, async (req, res) => {
     const db = await getDB();
     const rows = await db.all(`SELECT * FROM payouts WHERE status IN ('REQUESTED','APPROVED') ORDER BY requested_at ASC`);
