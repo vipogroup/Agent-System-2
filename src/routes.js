@@ -366,4 +366,72 @@ export async function registerRoutes(app) {
       res.status(500).json({ error: 'Internal server error' });
     }
   });
+
+  // Admin: Get all agents
+  app.get('/admin/agents', authRequired, adminOnly, async (req, res) => {
+    try {
+      const db = await getDB();
+      const agents = await db.all(`
+        SELECT id, email, full_name, referral_code, commission_rate_override, is_active, created_at, role
+        FROM agents 
+        ORDER BY created_at DESC
+      `);
+      
+      res.json({ items: agents });
+    } catch (error) {
+      console.error('Get agents error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Admin: Get pending payouts
+  app.get('/api/payouts/pending', authRequired, adminOnly, async (req, res) => {
+    try {
+      const db = await getDB();
+      const payouts = await db.all(`
+        SELECT p.*, a.email as agent_email, a.full_name as agent_name
+        FROM payouts p
+        JOIN agents a ON p.agent_id = a.id
+        WHERE p.status IN ('REQUESTED', 'APPROVED')
+        ORDER BY p.requested_at DESC
+      `);
+      
+      res.json({ items: payouts });
+    } catch (error) {
+      console.error('Get pending payouts error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Admin: Approve payout
+  app.post('/api/payouts/:id/approve', authRequired, adminOnly, async (req, res) => {
+    try {
+      const db = await getDB();
+      await db.run(
+        'UPDATE payouts SET status = ?, approved_at = datetime("now") WHERE id = ?',
+        ['APPROVED', req.params.id]
+      );
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Approve payout error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Admin: Mark payout as paid
+  app.post('/api/payouts/:id/mark-paid', authRequired, adminOnly, async (req, res) => {
+    try {
+      const db = await getDB();
+      await db.run(
+        'UPDATE payouts SET status = ?, paid_at = datetime("now") WHERE id = ?',
+        ['PAID', req.params.id]
+      );
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Mark paid error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
 }

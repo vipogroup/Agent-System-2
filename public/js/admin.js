@@ -52,7 +52,7 @@ async function loginAdmin(){
             // Registration successful and user is admin
             localStorage.setItem('adminToken', registerData.token);
             alert('משתמש מנהל נוצר בהצלחה!');
-            window.location.href = '/public/admin-dashboard.html';
+            window.location.href = '/public/dashboard-admin.html';
             return;
           } else if (registerResponse.status === 400 && registerData.error === 'Email already registered') {
             // User exists but password might be wrong
@@ -77,7 +77,7 @@ async function loginAdmin(){
     
     localStorage.setItem('adminToken', data.token);
     // Redirect to admin dashboard
-    window.location.href = '/public/admin-dashboard.html';
+    window.location.href = '/public/dashboard-admin.html';
     
   } catch (error) {
     console.error('Login error:', error);
@@ -86,15 +86,69 @@ async function loginAdmin(){
 }
 
 async function loadPendingPayouts(){
-  const token = getToken();
-  const res = await fetch('/admin/payouts/pending',{headers:{Authorization:'Bearer '+token}});
-  const data = await res.json();
-  const list = document.getElementById('pending');
-  list.innerHTML = (data.items||[]).map(p=>`<div class="card">
-    <div>סוכן #${p.agent_id} | בקשה #${p.id} | סכום: <b>${p.amount.toFixed(2)} ₪</b> | סטטוס: ${p.status}</div>
-    <button onclick="approve(${p.id})">אשר</button>
-    <button onclick="markPaid(${p.id})">סמן שולם</button>
-  </div>`).join('');
+  try {
+    const token = getToken();
+    const res = await fetch('/api/payouts/pending',{headers:{Authorization:'Bearer '+token}});
+    const data = await res.json();
+    const list = document.getElementById('pending');
+    list.innerHTML = (data.items||[]).map(p=>`<div class="card">
+      <div>סוכן #${p.agent_id} | בקשה #${p.id} | סכום: <b>${p.amount.toFixed(2)} ₪</b> | סטטוס: ${p.status}</div>
+      <button onclick="approve(${p.id})">אשר</button>
+      <button onclick="markPaid(${p.id})">סמן שולם</button>
+    </div>`).join('');
+  } catch (error) {
+    console.error('Error loading pending payouts:', error);
+    document.getElementById('pending').innerHTML = 'אין בקשות תשלום ממתינות';
+  }
+}
+
+async function loadAgents() {
+  try {
+    const token = getToken();
+    const response = await fetch('/admin/agents', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to load agents');
+    }
+    
+    const data = await response.json();
+    const agentsList = document.getElementById('agentsList');
+    
+    if (data.items && data.items.length > 0) {
+      const table = `
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+          <thead>
+            <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+              <th style="padding: 10px; text-align: right;">שם מלא</th>
+              <th style="padding: 10px; text-align: right;">אימייל</th>
+              <th style="padding: 10px; text-align: right;">קוד הפניה</th>
+              <th style="padding: 10px; text-align: right;">סטטוס</th>
+              <th style="padding: 10px; text-align: right;">תאריך הצטרפות</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.items.map(agent => `
+              <tr style="border-bottom: 1px solid #dee2e6;">
+                <td style="padding: 10px;">${agent.full_name || '-'}</td>
+                <td style="padding: 10px;">${agent.email}</td>
+                <td style="padding: 10px;">${agent.referral_code || '-'}</td>
+                <td style="padding: 10px;">${agent.is_active ? 'פעיל' : 'לא פעיל'}</td>
+                <td style="padding: 10px;">${new Date(agent.created_at).toLocaleDateString('he-IL')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      agentsList.innerHTML = table;
+    } else {
+      agentsList.innerHTML = '<p>אין סוכנים רשומים במערכת</p>';
+    }
+  } catch (error) {
+    console.error('Error loading agents:', error);
+    document.getElementById('agentsList').innerHTML = 'שגיאה בטעינת רשימת הסוכנים';
+  }
 }
 
 async function approve(id){
@@ -110,6 +164,26 @@ async function markPaid(id){
   loadPendingPayouts();
 }
 
-window.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('btnLoginA').addEventListener('click', loginAdmin);
+window.addEventListener('DOMContentLoaded', () => {
+  const token = getToken();
+  
+  if (window.location.pathname.includes('dashboard-admin.html')) {
+    if (!token) {
+      window.location.href = '/public/dashboard-admin.html';
+      return;
+    }
+    
+    // Load data for admin dashboard
+    loadPendingPayouts();
+    loadAgents();
+    
+    // Set up refresh every 30 seconds
+    setInterval(() => {
+      loadPendingPayouts();
+      loadAgents();
+    }, 30000);
+  } else {
+    // Login page
+    document.getElementById('btnLoginA').addEventListener('click', loginAdmin);
+  }
 });
