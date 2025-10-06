@@ -27,14 +27,17 @@ export async function registerRoutes(app) {
       const passwordHash = await hashPassword(password);
       const referralCode = uuidv4().substring(0, 8).toUpperCase();
       
+      // Set role to admin if this is the admin email
+      const role = email === 'admin@example.com' ? 'admin' : 'agent';
+      
       // Insert new agent
       const result = await db.run(
-        'INSERT INTO agents (email, password_hash, full_name, referral_code) VALUES (?, ?, ?, ?)',
-        [email, passwordHash, full_name || null, referralCode]
+        'INSERT INTO agents (email, password_hash, full_name, referral_code, role) VALUES (?, ?, ?, ?, ?)',
+        [email, passwordHash, full_name || null, referralCode, role]
       );
 
       // Generate JWT token
-      const token = signToken({ id: result.lastID, email, role: 'agent' });
+      const token = signToken({ id: result.lastID, email, role });
       
       res.json({ 
         token,
@@ -42,7 +45,8 @@ export async function registerRoutes(app) {
           id: result.lastID,
           email,
           full_name: full_name || null,
-          referral_code: referralCode
+          referral_code: referralCode,
+          role: role
         }
       });
     } catch (error) {

@@ -27,10 +27,50 @@ async function loginAdmin(){
     console.log('Response data:', data);
     
     if (!response.ok) {
+      // If admin doesn't exist, try to create it first
+      if (data.error === 'Invalid credentials' && email === 'admin@example.com') {
+        alert('משתמש מנהל לא נמצא. ננסה ליצור אותו...');
+        
+        // Try to register admin user
+        const registerResponse = await fetch(`${API}/api/agents/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            email: 'admin@example.com', 
+            password: 'admin123',
+            full_name: 'Admin User'
+          })
+        });
+        
+        if (registerResponse.ok) {
+          // Now update the user to be admin
+          const registerData = await registerResponse.json();
+          console.log('Admin registered, now updating role...');
+          
+          // Try login again
+          const retryResponse = await fetch(`${API}/api/agents/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password })
+          });
+          
+          if (retryResponse.ok) {
+            const retryData = await retryResponse.json();
+            localStorage.setItem('adminToken', retryData.token);
+            window.location.href = '/public/admin-dashboard.html';
+            return;
+          }
+        }
+      }
+      
       throw new Error(data.error || 'שגיאה בהתחברות');
     }
     
-    // Check if user is admin (role field or email check)
+    // Check if user is admin
     if (data.agent?.role !== 'admin' && email !== 'admin@example.com') {
       throw new Error('אין לך הרשאות מנהל');
     }
