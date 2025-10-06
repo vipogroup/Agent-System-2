@@ -38,10 +38,40 @@ async function loginAdmin(){
     localStorage.setItem('adminToken', data.token);
     console.log('Admin login successful, redirecting to dashboard...');
     
-    // Force redirect to admin dashboard
-    setTimeout(() => {
-      window.location.href = '/public/admin-dashboard.html';
-    }, 100);
+    // Try direct URL first, then fallback
+    console.log('Trying to redirect to admin dashboard...');
+    
+    // Test if admin dashboard exists
+    fetch('/public/admin-dashboard.html')
+      .then(response => {
+        if (response.ok) {
+          console.log('Admin dashboard found, redirecting...');
+          window.location.href = '/public/admin-dashboard.html';
+        } else {
+          console.log('Admin dashboard not found, creating simple redirect...');
+          // Create a simple admin panel in the same page
+          document.body.innerHTML = `
+            <div style="padding: 20px; text-align: center; font-family: Arial;">
+              <h1>🏢 דשבורד מנהל</h1>
+              <p>התחברת בהצלחה כמנהל!</p>
+              <div style="margin: 20px 0;">
+                <button onclick="window.location.href='/public/dashboard-agent.html'" 
+                        style="padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; border-radius: 5px;">
+                  לדף הסוכנים
+                </button>
+                <button onclick="logout()" 
+                        style="padding: 10px 20px; margin: 10px; background: #dc3545; color: white; border: none; border-radius: 5px;">
+                  יציאה
+                </button>
+              </div>
+            </div>
+          `;
+        }
+      })
+      .catch(error => {
+        console.error('Error checking admin dashboard:', error);
+        alert('שגיאה בטעינת דשבורד המנהל');
+      });
     
   } catch (error) {
     console.error('Login error:', error);
