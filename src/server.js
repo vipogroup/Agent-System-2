@@ -44,10 +44,15 @@ const startServer = async () => {
       registerSettingsRoutes, 
       registerAgentAdminRoutes 
     } = await import('./admin.js');
+    const { createAdmin } = await import('./initAdmin.js');
 
     // Initialize database connection
     const db = await getDB(); // This will create tables if they don't exist
-    
+    console.log('Database initialized');
+
+    // Create admin user if not exists
+    await createAdmin();
+
     // Register routes
     registerRoutes(app);
     registerAdminRoutes(app);
