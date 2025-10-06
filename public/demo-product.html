@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Demo Product</title>
+<link rel="stylesheet" href="/public/css/style.css"/>
+</head>
+<body>
+<header><div class="container"><h2>דף מוצר — Demo</h2></div></header>
+<main class="container">
+  <div class="card">
+    <h3>מוצר הדגמה</h3>
+    <p>אם הגעת עם פרמטר <code>?ref=</code>, נשלח קריאה ל-<code>/api/track</code> לשמירת העוגיה.</p>
+    <button onclick="simulateBuy()">קנה עכשיו (100₪)</button>
+  </div>
+</main>
+<script>
+function qs(name){ const u=new URL(location.href); return u.searchParams.get(name); }
+async function simulateBuy(){
+  const res = await fetch('/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({total_amount:100,customer_email:'buyer@demo.com'})});
+  const data = await res.json();
+  alert('הוזמן: '+data.order_uid+' | agent_ref='+data.agent_ref);
+}
+(async ()=>{
+  const ref = qs('ref');
+  if(ref){
+    await fetch('/api/track?ref='+encodeURIComponent(ref),{method:'POST'});
+    console.log('tracked ref', ref);
+  }
+})();
+</script>
+</body>
+</html>

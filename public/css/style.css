@@ -1,0 +1,13 @@
+body{font-family:system-ui, Arial, sans-serif;margin:0;padding:0}
+header{padding:16px;border-bottom:1px solid #eee}
+.container{max-width:960px;margin:0 auto;padding:16px}
+.card{border:1px solid #e5e5e5;border-radius:12px;padding:16px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.col{flex:1 1 320px}
+input,button{padding:10px;font-size:16px;border-radius:8px;border:1px solid #ddd}
+button{cursor:pointer}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+.kpi{display:flex;gap:16px}
+.kpi .card{flex:1}
+small.mono{font-family:monospace}

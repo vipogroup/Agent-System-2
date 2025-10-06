@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>הגדרות - מערכת שותפים</title>
+  <link rel="stylesheet" href="/public/css/style.css"/>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 0;
+      padding: 0;
+    }
+    .dashboard {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .sidebar {
+      background: #2c3e50;
+      color: white;
+      padding: 15px;
+      order: 2;
+    }
+    .main-content {
+      padding: 15px;
+      order: 1;
+    }
+    
+    /* Desktop styles */
+    @media (min-width: 768px) {
+      .dashboard {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        flex-direction: row;
+      }
+      .sidebar {
+        order: 1;
+        padding: 20px;
+      }
+      .main-content {
+        order: 2;
+        padding: 20px;
+      }
+    }
+    .btn {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      margin: 5px;
+      font-size: 16px;
+      min-height: 44px;
+      box-sizing: border-box;
+    }
+    
+    .sidebar ul {
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+    
+    .sidebar .btn {
+      width: 100%;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .btn:hover {
+      background: #2980b9;
+    }
+    .btn-success {
+      background: #27ae60;
+    }
+    .settings-card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 15px 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-group input {
+      width: 100%;
+      max-width: 300px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    .current-value {
+      color: #666;
+      font-size: 0.9em;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <div class="sidebar">
+      <h2>לוח בקרה</h2>
+      <nav>
+        <ul style="list-style: none; padding: 0;">
+          <li><a href="/public/dashboard-admin-panel.html" class="btn" style="display: block; margin-bottom: 10px;">סקירה כללית</a></li>
+          <li><a href="/public/admin-agents.html" class="btn" style="display: block; margin-bottom: 10px;">ניהול סוכנים</a></li>
+          <li><a href="/public/admin-payouts.html" class="btn" style="display: block; margin-bottom: 10px;">ניהול תשלומים</a></li>
+          <li><a href="/public/admin-settings.html" class="btn" style="display: block; margin-bottom: 10px; background: #34495e;">הגדרות</a></li>
+          <li><a href="#" id="logoutBtn" class="btn" style="display: block; margin-top: 30px; background: #e74c3c;">התנתק</a></li>
+        </ul>
+      </nav>
+    </div>
+    
+    <div class="main-content">
+      <h1>הגדרות מערכת</h1>
+      
+      <div class="settings-card">
+        <h2>שיעור עמלה כללי</h2>
+        <p>שיעור העמלה שיחול על כל הסוכנים (אלא אם הוגדר שיעור מותאם אישית לסוכן ספציפי)</p>
+        
+        <form id="commissionForm">
+          <div class="form-group">
+            <label for="commissionRate">שיעור עמלה (0.10 = 10%):</label>
+            <input type="number" id="commissionRate" step="0.01" min="0" max="1" required>
+            <div class="current-value" id="currentRate">טוען...</div>
+          </div>
+          <button type="submit" class="btn btn-success">שמור שינויים</button>
+        </form>
+      </div>
+
+      <div class="settings-card">
+        <h2>הגדרות כלליות</h2>
+        <p><strong>פורט השרת:</strong> 3000</p>
+        <p><strong>תקופת ניקוי עמלות:</strong> 14 ימים</p>
+        <p><strong>תוקף קוקי הפניה:</strong> 30 ימים</p>
+        <p><em>הגדרות אלו נמצאות בקובץ .env ודורשות הפעלה מחדש של השרת לשינוי</em></p>
+      </div>
+
+      <div class="settings-card">
+        <h2>מידע מערכת</h2>
+        <div id="systemInfo">טוען מידע...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Check if user is logged in
+    const token = localStorage.getItem('token_admin');
+    if (!token) {
+      window.location.href = '/public/dashboard-admin.html';
+    }
+
+    // Logout function
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('token_admin');
+      window.location.href = '/public/dashboard-admin.html';
+    });
+
+    // Load current commission rate
+    async function loadCommissionRate() {
+      try {
+        const response = await fetch(`${window.location.origin}/admin/settings/commission-rate`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to load commission rate');
+        }
+        
+        const data = await response.json();
+        const rate = data.commission_rate || 0.10;
+        
+        document.getElementById('commissionRate').value = rate;
+        document.getElementById('currentRate').textContent = `שיעור נוכחי: ${(rate * 100).toFixed(1)}%`;
+        
+      } catch (error) {
+        console.error('Error loading commission rate:', error);
+        document.getElementById('currentRate').textContent = 'שגיאה בטעינת השיעור הנוכחי';
+      }
+    }
+
+    // Save commission rate
+    document.getElementById('commissionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      try {
+        const rate = parseFloat(document.getElementById('commissionRate').value);
+        
+        if (isNaN(rate) || rate < 0 || rate > 1) {
+          alert('שיעור העמלה חייב להיות בין 0 ל-1 (למשל: 0.10 = 10%)');
+          return;
+        }
+
+        const response = await fetch(`${window.location.origin}/admin/settings/commission-rate`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ rate })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save commission rate');
+        }
+
+        alert('שיעור העמלה נשמר בהצלחה!');
+        loadCommissionRate();
+
+      } catch (error) {
+        console.error('Error saving commission rate:', error);
+        alert('שגיאה בשמירת שיעור העמלה: ' + error.message);
+      }
+    });
+
+    // Load system info
+    async function loadSystemInfo() {
+      try {
+        const response = await fetch(`${window.location.origin}/health`);
+        const data = await response.json();
+        
+        if (data.ok) {
+          document.getElementById('systemInfo').innerHTML = `
+            <p><strong>סטטוס השרת:</strong> <span style="color: green;">פעיל</span></p>
+            <p><strong>זמן טעינה:</strong> ${new Date().toLocaleString('he-IL')}</p>
+            <p><strong>גרסת Node.js:</strong> ${process?.version || 'לא זמין'}</p>
+          `;
+        }
+      } catch (error) {
+        document.getElementById('systemInfo').innerHTML = `
+          <p><strong>סטטוס השרת:</strong> <span style="color: red;">שגיאה בחיבור</span></p>
+        `;
+      }
+    }
+
+    // Load data when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      loadCommissionRate();
+      loadSystemInfo();
+    });
+  </script>
+</body>
+</html>
