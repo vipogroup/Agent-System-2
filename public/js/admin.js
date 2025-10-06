@@ -29,41 +29,41 @@ async function loginAdmin(){
     if (!response.ok) {
       // If admin doesn't exist, try to create it first
       if (data.error === 'Invalid credentials' && email === 'admin@example.com') {
-        alert('משתמש מנהל לא נמצא. ננסה ליצור אותו...');
+        console.log('Admin not found, trying to register...');
         
-        // Try to register admin user
-        const registerResponse = await fetch(`${API}/api/agents/register`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            email: 'admin@example.com', 
-            password: 'admin123',
-            full_name: 'Admin User'
-          })
-        });
-        
-        if (registerResponse.ok) {
-          // Now update the user to be admin
-          const registerData = await registerResponse.json();
-          console.log('Admin registered, now updating role...');
-          
-          // Try login again
-          const retryResponse = await fetch(`${API}/api/agents/login`, {
+        try {
+          // Try to register admin user
+          const registerResponse = await fetch(`${API}/api/agents/register`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ 
+              email: 'admin@example.com', 
+              password: 'admin123',
+              full_name: 'Admin User'
+            })
           });
           
-          if (retryResponse.ok) {
-            const retryData = await retryResponse.json();
-            localStorage.setItem('adminToken', retryData.token);
+          const registerData = await registerResponse.json();
+          console.log('Register response:', registerData);
+          
+          if (registerResponse.ok && registerData.agent?.role === 'admin') {
+            // Registration successful and user is admin
+            localStorage.setItem('adminToken', registerData.token);
+            alert('משתמש מנהל נוצר בהצלחה!');
             window.location.href = '/public/admin-dashboard.html';
             return;
+          } else if (registerResponse.status === 400 && registerData.error === 'Email already registered') {
+            // User exists but password might be wrong
+            alert('המשתמש קיים אבל הסיסמה שגויה. נסה שוב.');
+          } else {
+            console.error('Registration failed:', registerData);
+            alert('שגיאה ביצירת משתמש מנהל: ' + (registerData.error || 'שגיאה לא ידועה'));
           }
+        } catch (regError) {
+          console.error('Registration error:', regError);
+          alert('שגיאה ביצירת משתמש מנהל');
         }
       }
       
