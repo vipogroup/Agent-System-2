@@ -21,10 +21,13 @@ async function createAdmin() {
     // Create admin user
     const hashedPassword = await bcrypt.hash('admin123', 10);
     
+    // Generate unique referral code for admin
+    const referralCode = 'ADMIN' + Date.now().toString().slice(-6);
+    
     await new Promise((resolve, reject) => {
       db.run(
-        'INSERT INTO agents (name, email, password, role, status) VALUES (?, ?, ?, ?, ?)',
-        ['Admin User', 'admin@example.com', hashedPassword, 'admin', 'active'],
+        'INSERT INTO agents (full_name, email, password_hash, role, is_active, referral_code) VALUES (?, ?, ?, ?, ?, ?)',
+        ['Admin User', 'admin@example.com', hashedPassword, 'admin', 1, referralCode],
         function(err) {
           if (err) reject(err);
           else resolve(this.lastID);
