@@ -36,8 +36,12 @@ async function loginAdmin(){
     }
     
     localStorage.setItem('adminToken', data.token);
-    // Redirect to admin dashboard
-    window.location.href = '/public/admin-dashboard.html';
+    console.log('Admin login successful, redirecting to dashboard...');
+    
+    // Force redirect to admin dashboard
+    setTimeout(() => {
+      window.location.href = '/public/admin-dashboard.html';
+    }, 100);
     
   } catch (error) {
     console.error('Login error:', error);
