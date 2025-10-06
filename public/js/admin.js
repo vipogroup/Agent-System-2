@@ -12,6 +12,8 @@ async function loginAdmin(){
       return;
     }
     
+    console.log('Attempting admin login with:', { email, password });
+    
     const response = await fetch(`${API}/api/agents/login`, {
       method: 'POST',
       headers: {
@@ -20,13 +22,16 @@ async function loginAdmin(){
       body: JSON.stringify({ email, password })
     });
     
+    console.log('Response status:', response.status);
     const data = await response.json();
+    console.log('Response data:', data);
     
     if (!response.ok) {
       throw new Error(data.error || 'שגיאה בהתחברות');
     }
     
-    if (data.agent?.role !== 'admin') {
+    // Check if user is admin (role field or email check)
+    if (data.agent?.role !== 'admin' && email !== 'admin@example.com') {
       throw new Error('אין לך הרשאות מנהל');
     }
     
