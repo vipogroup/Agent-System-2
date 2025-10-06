@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node src/server.js",
+    "build": "echo 'Build completed'",
     "test": "echo \"Error: no test specified\" && exit 1",
     "clear": "node src/jobs/clearCommissions.js"
   },
