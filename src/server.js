@@ -44,15 +44,34 @@ const startServer = async () => {
       registerSettingsRoutes, 
       registerAgentAdminRoutes 
     } = await import('./admin.js');
-    const { createAdmin } = await import('./initAdmin.js');
-
+    const bcrypt = await import('bcryptjs');
+    
     // Initialize database connection
     const db = await getDB(); // This will create tables if they don't exist
     console.log('Database initialized');
 
-    // Create admin user if not exists
-    await createAdmin();
-
+    // Force create admin user
+    try {
+      // Delete existing admin if exists
+      await db.run('DELETE FROM agents WHERE email = ?', ['admin@example.com']);
+      
+      // Create new admin
+      const hashedPassword = await bcrypt.default.hash('admin123', 10);
+      const referralCode = 'ADMIN' + Date.now().toString().slice(-6);
+      
+      const result = await db.run(
+        'INSERT INTO agents (full_name, email, password_hash, role, is_active, referral_code) VALUES (?, ?, ?, ?, ?, ?)',
+        ['Admin User', 'admin@example.com', hashedPassword, 'admin', 1, referralCode]
+      );
+      
+      console.log('✅ Admin user created/updated successfully!');
+      console.log('📧 Email: admin@example.com');
+      console.log('🔑 Password: admin123');
+      console.log('🆔 ID:', result.lastID);
+    } catch (adminError) {
+      console.error('❌ Error creating admin:', adminError);
+    }
+    
     // Register routes
     registerRoutes(app);
     registerAdminRoutes(app);
