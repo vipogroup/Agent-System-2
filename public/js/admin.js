@@ -30,9 +30,9 @@ async function loginAdmin(){
       throw new Error('אין לך הרשאות מנהל');
     }
     
-    saveToken(data.token);
-    // Redirect to admin dashboard or load admin content
-    window.location.href = '/public/dashboard-admin-panel.html';
+    localStorage.setItem('adminToken', data.token);
+    // Redirect to admin dashboard
+    window.location.href = '/public/admin-dashboard.html';
     
   } catch (error) {
     console.error('Login error:', error);
