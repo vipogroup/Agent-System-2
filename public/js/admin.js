@@ -104,19 +104,29 @@ async function loadPendingPayouts(){
 
 async function loadAgents() {
   try {
+    console.log('מתחיל לטעון רשימת סוכנים...');
     const token = getToken();
+    console.log('Token:', token ? 'קיים' : 'חסר');
+    
     const response = await fetch('/admin/agents', {
       headers: { 'Authorization': 'Bearer ' + token }
     });
     
+    console.log('תגובת שרת:', response.status, response.statusText);
+    
     if (!response.ok) {
-      throw new Error('Failed to load agents');
+      const errorText = await response.text();
+      console.error('שגיאה בתגובת השרת:', errorText);
+      throw new Error(`שגיאה בטעינת סוכנים: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
+    console.log('נתוני סוכנים שהתקבלו:', data);
+    
     const agentsList = document.getElementById('agentsList');
     
     if (data.items && data.items.length > 0) {
+      console.log(`נמצאו ${data.items.length} סוכנים`);
       const table = `
         <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
           <thead>
@@ -129,25 +139,34 @@ async function loadAgents() {
             </tr>
           </thead>
           <tbody>
-            ${data.items.map(agent => `
-              <tr style="border-bottom: 1px solid #dee2e6;">
-                <td style="padding: 10px;">${agent.full_name || '-'}</td>
-                <td style="padding: 10px;">${agent.email}</td>
-                <td style="padding: 10px;">${agent.referral_code || '-'}</td>
-                <td style="padding: 10px;">${agent.is_active ? 'פעיל' : 'לא פעיל'}</td>
-                <td style="padding: 10px;">${new Date(agent.created_at).toLocaleDateString('he-IL')}</td>
-              </tr>
-            `).join('')}
+            ${data.items.map(agent => {
+              console.log('סוכן:', agent);
+              return `
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                  <td style="padding: 10px;">${agent.full_name || '-'}</td>
+                  <td style="padding: 10px;">${agent.email || 'ללא אימייל'}</td>
+                  <td style="padding: 10px;">${agent.referral_code || '-'}</td>
+                  <td style="padding: 10px;">${agent.is_active ? 'פעיל' : 'לא פעיל'}</td>
+                  <td style="padding: 10px;">${agent.created_at ? new Date(agent.created_at).toLocaleDateString('he-IL') : 'לא ידוע'}</td>
+                </tr>
+              `;
+            }).join('')}
           </tbody>
         </table>
       `;
       agentsList.innerHTML = table;
     } else {
+      console.log('לא נמצאו סוכנים במערכת');
       agentsList.innerHTML = '<p>אין סוכנים רשומים במערכת</p>';
     }
   } catch (error) {
-    console.error('Error loading agents:', error);
-    document.getElementById('agentsList').innerHTML = 'שגיאה בטעינת רשימת הסוכנים';
+    console.error('שגיאה בטעינת רשימת הסוכנים:', error);
+    const errorMessage = `שגיאה בטעינת רשימת הסוכנים: ${error.message}`;
+    console.error(errorMessage);
+    const agentsList = document.getElementById('agentsList');
+    if (agentsList) {
+      agentsList.innerHTML = `<div style="color: red; padding: 10px; background: #ffebee; border-radius: 4px;">${errorMessage}</div>`;
+    }
   }
 }
 
