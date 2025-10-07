@@ -1,6 +1,6 @@
 const API = window.location.origin;
-function getToken(){ return localStorage.getItem('token_admin'); }
-function saveToken(t){ localStorage.setItem('token_admin', t); }
+function getToken(){ return localStorage.getItem('adminToken'); }
+function saveToken(t){ localStorage.setItem('adminToken', t); }
 
 async function loginAdmin(){
   try {
