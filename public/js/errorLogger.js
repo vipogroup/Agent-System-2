@@ -154,9 +154,5 @@ const errorLogger = new ErrorLogger();
 // Export for global access
 window.errorLogger = errorLogger;
 
-// Auto-initialize error console in development
-if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-  document.addEventListener('DOMContentLoaded', () => {
-    errorLogger.createErrorConsole();
-  });
-}
+// Auto-initialize error console removed to prevent duplicate listeners
+// Error console will be initialized by admin.js when needed

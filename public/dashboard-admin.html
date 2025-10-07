@@ -94,42 +94,6 @@
 </main>
 <script src="/public/js/errorLogger.js"></script>
 <script src="/public/js/admin.js"></script>
-<script>
-  // Initialize error logger
-  document.addEventListener('DOMContentLoaded', () => {
-    // Create error console in admin panel
-    errorLogger.createErrorConsole();
-    
-    // Add error count to admin header
-    const updateErrorBadge = () => {
-      const errors = errorLogger.getLogs().filter(log => log.level === 'error' || log.level === 'unhandledRejection');
-      const errorCount = errors.length;
-      
-      let badge = document.getElementById('errorBadge');
-      if (!badge && errorCount > 0) {
-        const header = document.querySelector('header');
-        if (header) {
-          badge = document.createElement('span');
-          badge.id = 'errorBadge';
-          badge.style.cssText = 'background: #e74c3c; color: white; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 12px;';
-          header.insertBefore(badge, header.firstChild);
-        }
-      }
-      
-      if (badge) {
-        if (errorCount > 0) {
-          badge.textContent = errorCount > 9 ? '9+' : errorCount;
-          badge.style.display = 'inline-flex';
-        } else {
-          badge.style.display = 'none';
-        }
-      }
-    };
-    
-    // Update error badge only once on load, then on demand
-    // setInterval(updateErrorBadge, 5000); // הוסר כדי למנוע רענון תכוף
-    updateErrorBadge();
-  });
-</script>
+<!-- הוסר DOMContentLoaded listener כפול כדי למנוע רענון תכוף -->
 </body>
 </html>

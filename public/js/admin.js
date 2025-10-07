@@ -262,6 +262,32 @@ window.addEventListener('beforeunload', () => {
   }
 });
 
+// פונקציית עזר ליצירת error badge
+function createErrorBadge() {
+  const errors = errorLogger.getLogs().filter(log => log.level === 'error' || log.level === 'unhandledRejection');
+  const errorCount = errors.length;
+  
+  let badge = document.getElementById('errorBadge');
+  if (!badge && errorCount > 0) {
+    const header = document.querySelector('header');
+    if (header) {
+      badge = document.createElement('span');
+      badge.id = 'errorBadge';
+      badge.style.cssText = 'background: #e74c3c; color: white; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 12px;';
+      header.insertBefore(badge, header.firstChild);
+    }
+  }
+  
+  if (badge) {
+    if (errorCount > 0) {
+      badge.textContent = errorCount > 9 ? '9+' : errorCount;
+      badge.style.display = 'inline-flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   const token = getToken();
   
@@ -271,17 +297,21 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
+    // יצירת error console ו-badge
+    if (window.errorLogger) {
+      errorLogger.createErrorConsole();
+      createErrorBadge();
+    }
+    
     // Load data for admin dashboard
     loadPendingPayouts();
     loadAgents();
     
-    // הסר את הרענון האוטומטי - נשתמש רק ב-setTimeout בתוך הפונקציות
-    // setInterval(() => {
-    //   loadPendingPayouts();
-    //   loadAgents();
-    // }, 30000);
   } else {
     // Login page
-    document.getElementById('btnLoginA').addEventListener('click', loginAdmin);
+    const btnLoginA = document.getElementById('btnLoginA');
+    if (btnLoginA) {
+      btnLoginA.addEventListener('click', loginAdmin);
+    }
   }
 });
