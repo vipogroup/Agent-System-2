@@ -19,7 +19,13 @@ app.use((err, req, res, next) => {
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
-const limiter = rateLimit({ windowMs: 60*1000, max: 200 });
+const limiter = rateLimit({ 
+  windowMs: 60*1000, // 1 minute
+  max: 500, // increased from 200 to 500 requests per minute
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
 app.use(limiter);
 
 const __filename = fileURLToPath(import.meta.url);
