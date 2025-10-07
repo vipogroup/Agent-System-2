@@ -119,6 +119,7 @@ async function loadPendingPayouts(){
 
 // משתנה למעקב אחר זמן הבקשה האחרונה
 let lastAgentsLoadTime = 0;
+let refreshInterval;
 const AGENTS_REFRESH_INTERVAL = 30000; // 30 שניות בין רענונים
 
 async function loadAgents() {
@@ -198,8 +199,11 @@ async function loadAgents() {
       agentsList.innerHTML = '<p>אין סוכנים רשומים במערכת</p>';
     }
     
-    // תזמון הרענון הבא
-    setTimeout(loadAgents, AGENTS_REFRESH_INTERVAL);
+    // תזמון הרענון הבא - רק אם אין רענון פעיל
+    if (refreshInterval) {
+      clearTimeout(refreshInterval);
+    }
+    refreshInterval = setTimeout(loadAgents, AGENTS_REFRESH_INTERVAL);
     
   } catch (error) {
     const errorId = errorLogger.log('error', 'Failed to load agents', { 
@@ -220,7 +224,10 @@ async function loadAgents() {
       </div>`;
     
     // ננסה שוב אחרי 30 שניות במקרה של שגיאה
-    setTimeout(loadAgents, 30000);
+    if (refreshInterval) {
+      clearTimeout(refreshInterval);
+    }
+    refreshInterval = setTimeout(loadAgents, 30000);
   }
 }
 
@@ -247,6 +254,13 @@ async function markPaid(id){
   await res.json();
   loadPendingPayouts();
 }
+
+// עצור את כל הרענונים האוטומטיים בעת סגירת הדף
+window.addEventListener('beforeunload', () => {
+  if (refreshInterval) {
+    clearTimeout(refreshInterval);
+  }
+});
 
 window.addEventListener('DOMContentLoaded', () => {
   const token = getToken();
