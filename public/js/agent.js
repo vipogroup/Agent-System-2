@@ -156,8 +156,20 @@ async function requestPayout(){
   if(data.ok){ alert('הבקשה נרשמה'); renderMe(); } else { alert(data.error||'error'); }
 }
 
+// פונקציית התנתקות
+function logout() {
+  localStorage.removeItem('token');
+  window.location.href = '/public/dashboard-agent.html';
+}
+
 window.addEventListener('DOMContentLoaded',()=>{
   console.log('דף נטען, מתחיל להגדיר event listeners...');
+  
+  // הוספת מאזין לכפתור ההתנתקות
+  const btnLogout = document.getElementById('btnLogout');
+  if (btnLogout) {
+    btnLogout.addEventListener('click', logout);
+  }
   
   const btnRegister = document.getElementById('btnRegister');
   const btnLogin = document.getElementById('btnLogin');
