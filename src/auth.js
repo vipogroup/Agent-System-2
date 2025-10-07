@@ -32,38 +32,8 @@ export function authRequired(req, res, next) {
 }
 
 export function adminOnly(req, res, next) {
-  console.log('בדיקת הרשאות מנהל - פרטי המשתמש:', req.user);
-  
-  if (!req.user) {
-    console.error('שגיאה: אין אובייקט משתמש בבקשה');
-    return res.status(401).json({ 
-      error: 'לא מורשה - משתמש לא מזוהה',
-      debug: {
-        hasUserObject: !!req.user,
-        user: req.user,
-        headers: req.headers
-      }
-    });
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin only' });
   }
-  
-  if (req.user.role !== 'admin') {
-    console.error('שגיאת הרשאות: למשתמש אין הרשאת מנהל', {
-      userId: req.user.id,
-      userRole: req.user.role,
-      requiredRole: 'admin',
-      path: req.path
-    });
-    
-    return res.status(403).json({ 
-      error: 'גישה נדחתה - נדרשת הרשאת מנהל',
-      debug: {
-        userId: req.user.id,
-        userRole: req.user.role,
-        requiredRole: 'admin'
-      }
-    });
-  }
-  
-  console.log('אימות הצליח - משתמש בעל הרשאת מנהל:', req.user.email);
   next();
 }

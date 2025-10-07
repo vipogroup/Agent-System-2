@@ -370,26 +370,17 @@ export async function registerRoutes(app) {
   // Admin: Get all agents
   app.get('/admin/agents', authRequired, adminOnly, async (req, res) => {
     try {
-      console.log('מתחיל לטעון רשימת סוכנים עבור מנהל:', req.user);
       const db = await getDB();
-      
       const agents = await db.all(`
         SELECT id, email, full_name, referral_code, commission_rate_override, is_active, created_at, role
         FROM agents 
-        WHERE role = 'agent'
         ORDER BY created_at DESC
       `);
       
-      console.log(`נמצאו ${agents.length} סוכנים במסד הנתונים:`, agents);
-      
       res.json({ items: agents });
     } catch (error) {
-      console.error('שגיאה בטעינת רשימת הסוכנים:', error);
-      res.status(500).json({ 
-        error: 'שגיאה פנימית בשרת',
-        debug: error.message,
-        stack: error.stack
-      });
+      console.error('Get agents error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 

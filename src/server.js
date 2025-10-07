@@ -19,7 +19,7 @@ app.use((err, req, res, next) => {
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
-const limiter = rateLimit({ windowMs: 60*1000, max: 1000 });
+const limiter = rateLimit({ windowMs: 60*1000, max: 200 });
 app.use(limiter);
 
 const __filename = fileURLToPath(import.meta.url);
