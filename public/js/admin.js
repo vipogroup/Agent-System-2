@@ -275,11 +275,11 @@ window.addEventListener('DOMContentLoaded', () => {
     loadPendingPayouts();
     loadAgents();
     
-    // Set up refresh every 30 seconds
-    setInterval(() => {
-      loadPendingPayouts();
-      loadAgents();
-    }, 30000);
+    // הסר את הרענון האוטומטי - נשתמש רק ב-setTimeout בתוך הפונקציות
+    // setInterval(() => {
+    //   loadPendingPayouts();
+    //   loadAgents();
+    // }, 30000);
   } else {
     // Login page
     document.getElementById('btnLoginA').addEventListener('click', loginAdmin);

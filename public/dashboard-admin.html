@@ -126,8 +126,8 @@
       }
     };
     
-    // Update error badge every 5 seconds
-    setInterval(updateErrorBadge, 5000);
+    // Update error badge only once on load, then on demand
+    // setInterval(updateErrorBadge, 5000); // הוסר כדי למנוע רענון תכוף
     updateErrorBadge();
   });
 </script>
