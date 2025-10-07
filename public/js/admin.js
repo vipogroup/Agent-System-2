@@ -1,4 +1,13 @@
 const API = window.location.origin;
+
+// Log initialization
+try {
+  if (!window.errorLogger) {
+    console.warn('Error logger not found. Make sure errorLogger.js is loaded before admin.js');
+  }
+} catch (e) {
+  console.error('Failed to initialize error logging:', e);
+}
 function getToken(){ return localStorage.getItem('token_admin'); }
 function saveToken(t){ localStorage.setItem('token_admin', t); }
 
@@ -97,58 +106,133 @@ async function loadPendingPayouts(){
       <button onclick="markPaid(${p.id})">סמן שולם</button>
     </div>`).join('');
   } catch (error) {
+    const errorId = errorLogger.log('error', 'Failed to load pending payouts', { error: error.message });
     console.error('Error loading pending payouts:', error);
-    document.getElementById('pending').innerHTML = 'אין בקשות תשלום ממתינות';
+    document.getElementById('pending').innerHTML = `
+      <div class="error-message">
+        שגיאה בטעינת בקשות תשלום. 
+        <a href="#" onclick="errorLogger.createErrorConsole(); return false;">הצג פרטים</a>
+        <span style="color: #999; font-size: 0.9em;">(קוד שגיאה: ${errorId})</span>
+      </div>`;
   }
 }
 
+// משתנה למעקב אחר זמן הבקשה האחרונה
+let lastAgentsLoadTime = 0;
+const AGENTS_REFRESH_INTERVAL = 30000; // 30 שניות בין רענונים
+
 async function loadAgents() {
   try {
+    // בדיקה מתי הייתה הבקשה האחרונה
+    const now = Date.now();
+    if (now - lastAgentsLoadTime < 10000) { // הגבלת תדירות ל-10 שניות
+      console.log('ממתין בין בקשות...');
+      return;
+    }
+    
+    lastAgentsLoadTime = now;
+    
     const token = getToken();
-    const response = await fetch('/admin/agents', {
-      headers: { 'Authorization': 'Bearer ' + token }
+    if (!token) {
+      console.error('No token found');
+      return;
+    }
+    
+    console.log('טוען רשימת סוכנים...');
+    const response = await fetch(`${API}/admin/agents`, {
+      headers: { 
+        'Authorization': 'Bearer ' + token,
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      },
+      cache: 'no-store'
     });
     
+    if (response.status === 429) {
+      const retryAfter = response.headers.get('Retry-After') || 30;
+      console.warn(`יותר מדי בקשות. מנסה שוב בעוד ${retryAfter} שניות`);
+      setTimeout(loadAgents, retryAfter * 1000);
+      return;
+    }
+    
     if (!response.ok) {
-      throw new Error('Failed to load agents');
+      throw new Error(`שגיאת שרת: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
     const agentsList = document.getElementById('agentsList');
     
-    if (data.items && data.items.length > 0) {
+    if (!data || !Array.isArray(data.items)) {
+      throw new Error('פורמט תגובה לא תקין מהשרת');
+    }
+    
+    if (data.items.length > 0) {
       const table = `
-        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-          <thead>
-            <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-              <th style="padding: 10px; text-align: right;">שם מלא</th>
-              <th style="padding: 10px; text-align: right;">אימייל</th>
-              <th style="padding: 10px; text-align: right;">קוד הפניה</th>
-              <th style="padding: 10px; text-align: right;">סטטוס</th>
-              <th style="padding: 10px; text-align: right;">תאריך הצטרפות</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${data.items.map(agent => `
-              <tr style="border-bottom: 1px solid #dee2e6;">
-                <td style="padding: 10px;">${agent.full_name || '-'}</td>
-                <td style="padding: 10px;">${agent.email}</td>
-                <td style="padding: 10px;">${agent.referral_code || '-'}</td>
-                <td style="padding: 10px;">${agent.is_active ? 'פעיל' : 'לא פעיל'}</td>
-                <td style="padding: 10px;">${new Date(agent.created_at).toLocaleDateString('he-IL')}</td>
+        <div style="overflow-x:auto;">
+          <table style="width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 800px;">
+            <thead>
+              <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                <th style="padding: 10px; text-align: right;">שם מלא</th>
+                <th style="padding: 10px; text-align: right;">אימייל</th>
+                <th style="padding: 10px; text-align: right;">קוד הפניה</th>
+                <th style="padding: 10px; text-align: right;">סטטוס</th>
+                <th style="padding: 10px; text-align: right;">תאריך הצטרפות</th>
               </tr>
-            `).join('')}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              ${data.items.map(agent => `
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                  <td style="padding: 10px;">${escapeHtml(agent.full_name) || '-'}</td>
+                  <td style="padding: 10px;">${escapeHtml(agent.email)}</td>
+                  <td style="padding: 10px;">${escapeHtml(agent.referral_code) || '-'}</td>
+                  <td style="padding: 10px;">${agent.is_active ? 'פעיל' : 'לא פעיל'}</td>
+                  <td style="padding: 10px;">${agent.created_at ? new Date(agent.created_at).toLocaleDateString('he-IL') : '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
       `;
       agentsList.innerHTML = table;
     } else {
       agentsList.innerHTML = '<p>אין סוכנים רשומים במערכת</p>';
     }
+    
+    // תזמון הרענון הבא
+    setTimeout(loadAgents, AGENTS_REFRESH_INTERVAL);
+    
   } catch (error) {
-    console.error('Error loading agents:', error);
-    document.getElementById('agentsList').innerHTML = 'שגיאה בטעינת רשימת הסוכנים';
+    const errorId = errorLogger.log('error', 'Failed to load agents', { 
+      error: error.message,
+      stack: error.stack 
+    });
+    
+    console.error('שגיאה בטעינת סוכנים:', error);
+    const errorMessage = error.message || 'שגיאה לא ידועה';
+    document.getElementById('agentsList').innerHTML = `
+      <div style="color: #e74c3c; padding: 15px; background: #fde8e8; border-radius: 4px; margin: 10px 0;">
+        שגיאה בטעינת רשימת הסוכנים: ${escapeHtml(errorMessage)}
+        <div style="margin-top: 10px;">
+          <button onclick="loadAgents()" style="margin-left: 10px; background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">נסה שוב</button>
+          <a href="#" onclick="errorLogger.createErrorConsole(); return false;" style="color: #2980b9; text-decoration: none; font-size: 0.9em;">הצג פרטי שגיאה</a>
+          <span style="color: #999; font-size: 0.9em; margin-right: 10px;">(קוד שגיאה: ${errorId})</span>
+        </div>
+      </div>`;
+    
+    // ננסה שוב אחרי 30 שניות במקרה של שגיאה
+    setTimeout(loadAgents, 30000);
   }
+}
+
+// פונקציית עזר למניעת XSS
+function escapeHtml(unsafe) {
+  if (unsafe === null || unsafe === undefined) return '';
+  return String(unsafe)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 async function approve(id){

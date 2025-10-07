@@ -202,6 +202,15 @@
     <p><small>כדי לשמור ref: <code>fetch('/api/track?ref=AGXXXX',{method:'POST'})</code> או הוסף ?ref= לקישור.</small></p>
   </div>
 </main>
-<script src="/public/js/agent.js"></script>
+  <script src="/public/js/errorLogger.js"></script>
+  <script src="/public/js/agent.js"></script>
+  <script>
+    // Initialize error logger in development
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      document.addEventListener('DOMContentLoaded', () => {
+        errorLogger.createErrorConsole();
+      });
+    }
+  </script>
 </body>
 </html>
