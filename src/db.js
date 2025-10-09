@@ -88,3 +88,55 @@ export async function getDB() {
 
   return db;
 }
+
+// Initialize database function
+export async function initializeDatabase() {
+  try {
+    const db = await getDB();
+    console.log('Database initialized successfully');
+    return db;
+  } catch (error) {
+    console.error('Failed to initialize database:', error);
+    throw error;
+  }
+}
+
+// Initialize admin user
+export async function initializeAdmin() {
+  try {
+    const db = await getDB();
+    
+    // Check if admin exists
+    const adminExists = await db.get(
+      'SELECT id FROM agents WHERE role = ?', 
+      ['admin']
+    );
+    
+    if (!adminExists) {
+      console.log('No admin user found, creating default admin...');
+      
+      const bcrypt = await import('bcryptjs');
+      const hashedPassword = await bcrypt.default.hash('admin123', 10);
+      
+      await db.run(`
+        INSERT INTO agents (email, password_hash, full_name, role, referral_code)
+        VALUES (?, ?, ?, ?, ?)
+      `, [
+        'admin@system.com',
+        hashedPassword,
+        'System Admin',
+        'admin',
+        'ADMIN001'
+      ]);
+      
+      console.log('✅ Default admin user created');
+      console.log('Email: admin@system.com');
+      console.log('Password: admin123');
+    } else {
+      console.log('✅ Admin user exists');
+    }
+  } catch (error) {
+    console.error('Failed to initialize admin:', error);
+    throw error;
+  }
+}

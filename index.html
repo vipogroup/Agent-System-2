@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>מערכת סוכנים - Agent System</title>
-    <meta http-equiv="refresh" content="3;url=simple-system.html">
+    <meta http-equiv="refresh" content="3;url=github-system.html">
     <style>
         * {
             margin: 0;
@@ -145,7 +145,7 @@
             <div class="feature">🛒 אתר מכירות מובנה עם מעקב</div>
         </div>
         
-        <a href="simple-system.html" class="btn" id="manualBtn">
+        <a href="github-system.html" class="btn" id="manualBtn">
             🏢 כניסה למערכת עכשיו
         </a>
         
@@ -177,7 +177,7 @@
                 
                 // Try to redirect
                 try {
-                    window.location.href = 'simple-system.html';
+                    window.location.href = 'github-system.html';
                 } catch (e) {
                     console.log('Redirect failed, user can click manually');
                     countdownElement.textContent = 'לחץ על הכפתור למעלה';
@@ -188,7 +188,7 @@
         // Fallback redirect after 5 seconds
         setTimeout(() => {
             try {
-                window.location.href = 'simple-system.html';
+                window.location.href = 'github-system.html';
             } catch (e) {
                 console.log('Fallback redirect failed');
             }

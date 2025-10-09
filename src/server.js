@@ -42,6 +42,11 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 10000;
 
+// Root route
+app.get('/', (req, res) => {
+  res.redirect('/public/index.html');
+});
+
 // Initialize the server
 const startServer = async () => {
   try {
