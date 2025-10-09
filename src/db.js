@@ -6,6 +6,7 @@ const dbPath = path.join(process.cwd(), 'data.sqlite');
 
 export async function getDB() {
   const db = await open({
+    filename: dbPath,
     driver: sqlite3.Database
   });
 
