@@ -200,7 +200,10 @@
 <body>
     <div class="header">
         <h1>🏢 דשבורד מנהל</h1>
-        <button class="logout-btn" onclick="logout()">יציאה</button>
+        <div>
+            <button class="logout-btn" onclick="loadDashboard()" style="margin-left: 10px;">🔄 רענן</button>
+            <button class="logout-btn" onclick="logout()">יציאה</button>
+        </div>
     </div>
 
     <div class="container">
@@ -279,22 +282,50 @@
 
         // Load dashboard data
         async function loadDashboard() {
+            console.log('Loading dashboard data...');
+            
             try {
-                // Load agents
-                const agentsResponse = await fetch(`${API_BASE}/admin/agents`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+                // Load agents with different API endpoints
+                let agentsData = null;
+                
+                // Try multiple endpoints
+                const endpoints = [
+                    `${API_BASE}/admin/agents`,
+                    `${API_BASE}/api/admin/agents`,
+                    `${API_BASE}/api/agents`
+                ];
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        console.log('Trying endpoint:', endpoint);
+                        const agentsResponse = await fetch(endpoint, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
 
-                if (agentsResponse.ok) {
-                    const agentsData = await agentsResponse.json();
-                    console.log('Agents data:', agentsData);
-                    updateAgentsTable(agentsData.items || []);
+                        console.log('Response status:', agentsResponse.status);
+                        
+                        if (agentsResponse.ok) {
+                            agentsData = await agentsResponse.json();
+                            console.log('Agents data from', endpoint, ':', agentsData);
+                            break;
+                        }
+                    } catch (endpointError) {
+                        console.log('Endpoint failed:', endpoint, endpointError.message);
+                    }
+                }
+
+                if (agentsData && (agentsData.items || agentsData.length > 0 || Array.isArray(agentsData))) {
+                    const agents = agentsData.items || agentsData;
+                    console.log('Processing agents:', agents);
+                    
+                    updateAgentsTable(agents);
                     
                     // Update stats based on agents
-                    const activeAgents = (agentsData.items || []).filter(agent => agent.is_active).length;
-                    const pendingAgents = (agentsData.items || []).filter(agent => !agent.is_active).length;
+                    const activeAgents = agents.filter(agent => agent.is_active || agent.role === 'agent').length;
+                    const pendingAgents = agents.filter(agent => !agent.is_active && agent.role !== 'admin').length;
                     updateStats({
                         activeAgents: activeAgents,
                         pendingAgents: pendingAgents,
@@ -302,8 +333,7 @@
                         payoutRequests: 0
                     });
                 } else {
-                    console.error('Failed to load agents:', agentsResponse.status);
-                    // Show demo data if API fails
+                    console.log('No agents data found, showing demo data');
                     showDemoData();
                 }
 
@@ -540,6 +570,12 @@
 
         // Load dashboard on page load
         loadDashboard();
+        
+        // Auto refresh every 30 seconds
+        setInterval(() => {
+            console.log('Auto refreshing dashboard...');
+            loadDashboard();
+        }, 30000);
     </script>
 </body>
 </html>
