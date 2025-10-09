@@ -15,6 +15,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f5f7fa;
             direction: rtl;
+            overflow-x: hidden; /* מניעת גלילה אופקית */
         }
         
         .header {
@@ -154,10 +155,17 @@
             background: #e0a800;
         }
         
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        
         .table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 1rem;
+            min-width: 600px; /* מינימום רוחב לטבלה */
         }
         
         .table th,
@@ -165,12 +173,103 @@
             padding: 0.75rem;
             text-align: right;
             border-bottom: 1px solid #eee;
+            white-space: nowrap; /* מניעת שבירת שורות */
+            overflow: hidden;
+            text-overflow: ellipsis; /* נקודות אם הטקסט ארוך מדי */
         }
         
         .table th {
             background: #f8f9fa;
             font-weight: 600;
             color: #2c3e50;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        
+        /* תיקונים למובייל */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .header h1 {
+                font-size: 1.2rem;
+            }
+            
+            .container {
+                margin: 1rem auto;
+                padding: 0 0.5rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .link-input-group {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .link-input {
+                font-size: 12px;
+                padding: 10px;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 13px;
+            }
+            
+            .table {
+                min-width: 500px; /* רוחב מינימלי קטן יותר למובייל */
+            }
+            
+            .table th,
+            .table td {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+            
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                padding: 0.5rem;
+            }
+            
+            .container {
+                padding: 0 0.25rem;
+            }
+            
+            .section {
+                padding: 0.75rem;
+            }
+            
+            .table {
+                min-width: 400px;
+            }
+            
+            .table th,
+            .table td {
+                padding: 0.4rem;
+                font-size: 0.8rem;
+            }
+            
         }
         
         .alert {
@@ -254,9 +353,11 @@
                 </div>
                 
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn btn-warning" onclick="shareToWhatsApp()">📱 שתף בוואטסאפ</button>
-                    <button class="btn btn-warning" onclick="shareToFacebook()">📘 שתף בפייסבוק</button>
-                    <button class="btn btn-warning" onclick="shareToEmail()">📧 שתף במייל</button>
+                    <button class="btn btn-warning" onclick="shareToWhatsApp()">📱 וואטסאפ</button>
+                    <button class="btn btn-warning" onclick="shareToFacebook()">📘 פייסבוק</button>
+                    <button class="btn btn-warning" onclick="shareToInstagram()">📷 אינסטגרם</button>
+                    <button class="btn btn-warning" onclick="shareToTikTok()">🎵 טיקטוק</button>
+                    <button class="btn btn-warning" onclick="shareToTelegram()">✈️ טלגרם</button>
                 </div>
             </div>
             
@@ -266,28 +367,28 @@
         <!-- Sales History -->
         <div class="section">
             <h2>📊 היסטוריית מכירות</h2>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>תאריך</th>
-                        <th>סכום מכירה</th>
-                        <th>עמלה</th>
-                        <th>מוצר</th>
-                        <th>לקוח</th>
-                    </tr>
-                </thead>
-                <tbody id="salesTable">
-                    <tr>
-                        <td colspan="5" style="text-align: center; padding: 2rem;">טוען נתונים...</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>תאריך</th>
+                            <th>מוצר</th>
+                            <th>סכום</th>
+                            <th>עמלה</th>
+                        </tr>
+                    </thead>
+                    <tbody id="salesHistory">
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 2rem;">טוען נתונים...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Demo Section -->
         <div class="section">
             <h2>🧪 דמו - סימולציית מכירה</h2>
-            <div class="alert alert-info">
                 <strong>לצורך בדיקה:</strong> לחץ על הכפתור כדי לסמלץ מכירה שתזכה אותך בעמלה
             </div>
             <button class="btn btn-success" onclick="simulateSale()">💰 סמלץ מכירה של ₪500</button>
@@ -410,19 +511,47 @@
             window.open(facebookUrl, '_blank');
         }
 
-        // Share to Email
-        function shareToEmail() {
+        // Share to Instagram
+        function shareToInstagram() {
             const link = document.getElementById('referralLink').value;
-            const subject = 'עיסויים מקצועיים - מבצע מיוחד!';
-            const body = `היי!\n\nרציתי לשתף איתך משהו מיוחד - עיסויים מקצועיים במחירים מעולים!\n\nתבדוק כאן: ${link}\n\nבהצלחה!`;
-            const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            window.location.href = mailtoUrl;
+            const message = `עיסויים מקצועיים במחירים מעולים! 💆‍♀️✨\n\n${link}\n\n#עיסוי #מבצע #רווחה`;
+            
+            // Instagram doesn't have direct sharing API, so we copy to clipboard
+            navigator.clipboard.writeText(message).then(() => {
+                alert('הטקסט הועתק! עכשיו פתח את אינסטגרם והדבק בסטורי או בפוסט 📷');
+                // Try to open Instagram web
+                window.open('https://www.instagram.com/', '_blank');
+            }).catch(() => {
+                alert('לא ניתן להעתיק. העתק ידנית: ' + message);
+            });
+        }
+
+        // Share to TikTok
+        function shareToTikTok() {
+            const link = document.getElementById('referralLink').value;
+            const message = `עיסויים מקצועיים במחירים מעולים! 💆‍♀️\n\n${link}\n\n#עיסוי #מבצע #רווחה #טיקטוק`;
+            
+            // TikTok doesn't have direct sharing API, so we copy to clipboard
+            navigator.clipboard.writeText(message).then(() => {
+                alert('הטקסט הועתק! עכשיו פתח את טיקטוק והדבק בתיאור הסרטון 🎵');
+                // Try to open TikTok web
+                window.open('https://www.tiktok.com/', '_blank');
+            }).catch(() => {
+                alert('לא ניתן להעתיק. העתק ידנית: ' + message);
+            });
+        }
+
+        // Share to Telegram
+        function shareToTelegram() {
+            const link = document.getElementById('referralLink').value;
+            const message = `היי! יש לי משהו מיוחד בשבילך - עיסויים מקצועיים במחירים מעולים! 💆‍♀️\n\nתבדוק כאן: ${link}`;
+            const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(message)}`;
+            window.open(telegramUrl, '_blank');
         }
 
         // Simulate sale for demo
         async function simulateSale() {
             try {
-                const referralCode = document.getElementById('referralCode').textContent;
                 
                 const response = await fetch(`${API_BASE}/api/record-sale`, {
                     method: 'POST',
