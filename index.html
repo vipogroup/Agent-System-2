@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת סוכנים - Agent System</title>
+    <meta http-equiv="refresh" content="3;url=https://agent-system-2.onrender.com">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            direction: rtl;
+            color: white;
+            text-align: center;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            max-width: 600px;
+            width: 90%;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .loading {
+            margin: 2rem 0;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .btn {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255,255,255,0.3);
+            margin: 10px;
+        }
+        
+        .btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .features {
+            margin: 2rem 0;
+            text-align: right;
+        }
+        
+        .feature {
+            margin: 1rem 0;
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .countdown {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 1rem 0;
+            color: #FFD700;
+        }
+        
+        .status {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid rgba(40, 167, 69, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            color: #FFF3CD;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 מערכת סוכנים</h1>
+        <p class="subtitle">מערכת ניהול סוכנים מתקדמת עם מעקב הפניות</p>
+        
+        <div class="status">
+            <strong>✅ המערכת פעילה ומוכנה לשימוש!</strong>
+        </div>
+        
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>מעביר אותך למערכת...</p>
+            <div class="countdown" id="countdown">3</div>
+        </div>
+        
+        <div class="features">
+            <div class="feature">🔗 קישורי הפניה ייחודיים לכל סוכן</div>
+            <div class="feature">📊 מעקב אחר ביקורים ומכירות בזמן אמת</div>
+            <div class="feature">💰 חישוב עמלות אוטומטי (10%)</div>
+            <div class="feature">📈 דשבורד מנהל ודשבורד סוכן</div>
+            <div class="feature">🛒 אתר מכירות מובנה עם מעקב</div>
+        </div>
+        
+        <a href="https://agent-system-2.onrender.com" class="btn" id="manualBtn">
+            🏢 כניסה למערכת עכשיו
+        </a>
+        
+        <div class="warning">
+            <strong>💡 הוראות שימוש:</strong><br>
+            • לרישום סוכן חדש - לחץ "הרשמת סוכן חדש"<br>
+            • לכניסת מנהל - לחץ "כניסת מנהל"<br>
+            • לכניסת סוכן קיים - לחץ "כניסת סוכן"
+        </div>
+        
+        <p style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.7;">
+            אם לא הועברת אוטומטית, לחץ על הכפתור למעלה
+        </p>
+    </div>
+
+    <script>
+        // Countdown timer
+        let seconds = 3;
+        const countdownElement = document.getElementById('countdown');
+        const manualBtn = document.getElementById('manualBtn');
+        
+        const timer = setInterval(() => {
+            seconds--;
+            countdownElement.textContent = seconds;
+            
+            if (seconds <= 0) {
+                clearInterval(timer);
+                countdownElement.textContent = 'מעביר...';
+                
+                // Try to redirect
+                try {
+                    window.location.href = 'https://agent-system-2.onrender.com';
+                } catch (e) {
+                    console.log('Redirect failed, user can click manually');
+                    countdownElement.textContent = 'לחץ על הכפתור למעלה';
+                }
+            }
+        }, 1000);
+        
+        // Fallback redirect after 5 seconds
+        setTimeout(() => {
+            try {
+                window.location.href = 'https://agent-system-2.onrender.com';
+            } catch (e) {
+                console.log('Fallback redirect failed');
+            }
+        }, 5000);
+        
+        // Manual button click tracking
+        manualBtn.addEventListener('click', () => {
+            console.log('Manual redirect clicked');
+        });
+        
+        // Show loading status
+        console.log('GitHub Pages redirect page loaded successfully');
+    </script>
+</body>
+</html>
