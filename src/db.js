@@ -20,6 +20,7 @@ export async function getDB() {
       email TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       full_name TEXT,
+      phone TEXT,
       referral_code TEXT UNIQUE,
       role TEXT DEFAULT 'agent',
       is_active INTEGER DEFAULT 1,

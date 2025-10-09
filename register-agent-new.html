@@ -53,29 +53,31 @@
             display: block;
             margin-bottom: 0.5rem;
             color: #333;
-            font-weight: 500;
+            font-weight: 600;
         }
         
-        input {
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="password"] {
             width: 100%;
-            padding: 12px 15px;
+            padding: 1rem;
             border: 2px solid #e1e5e9;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 1rem;
             transition: all 0.3s ease;
-            background: #f8f9fa;
+            direction: rtl;
         }
         
         input:focus {
             outline: none;
-            border-color: #667eea;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #4ecdc4;
+            box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
         }
         
         .btn {
             width: 100%;
-            padding: 15px;
+            padding: 1rem;
             border: none;
             border-radius: 10px;
             font-size: 1.1rem;
@@ -83,6 +85,9 @@
             cursor: pointer;
             transition: all 0.3s ease;
             margin-bottom: 1rem;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
         }
         
         .btn-primary {
@@ -100,6 +105,7 @@
             color: #666;
             border: 2px solid #e1e5e9;
         }
+        
         .btn-secondary:hover {
             background: #e9ecef;
         }
@@ -111,11 +117,9 @@
             border: 1px solid transparent;
         }
         
-        .email-status {
-            margin-top: 0.5rem;
-            font-size: 0.9rem;
-            padding: 0.3rem;
-            border-radius: 3px;
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
             border: 1px solid #c3e6cb;
         }
         
@@ -131,20 +135,44 @@
             border: 1px solid #bee5eb;
         }
         
+        .email-status {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            padding: 0.3rem;
+            border-radius: 3px;
+        }
+        
+        .email-available {
+            color: #28a745;
+            background: #d4edda;
+        }
+        
+        .email-taken {
+            color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .form-group small {
+            display: block;
+            margin-top: 0.25rem;
+            font-size: 0.875em;
+            color: #6c757d;
+        }
+        
         .loading {
             display: none;
             text-align: center;
-            color: #666;
+            margin: 1rem 0;
         }
         
         .spinner {
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border-top: 3px solid #4ecdc4;
             border-radius: 50%;
             width: 30px;
             height: 30px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+            margin: 0 auto 1rem;
         }
         
         @keyframes spin {
@@ -154,28 +182,32 @@
         
         .back-link {
             text-align: center;
-            margin-top: 1rem;
+            margin-top: 2rem;
         }
         
         .back-link a {
-            color: #667eea;
+            color: #666;
             text-decoration: none;
-            font-size: 14px;
+            font-size: 0.9rem;
         }
         
         .back-link a:hover {
-            text-decoration: underline;
+            color: #4ecdc4;
         }
         
-        @media (max-width: 768px) {
-            .container {
-                padding: 2rem;
-                margin: 10px;
-            }
-            
-            h1 {
-                font-size: 1.8rem;
-            }
+        .password-recovery {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        
+        .password-recovery a {
+            color: #4ecdc4;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        
+        .password-recovery a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -228,6 +260,10 @@
             </button>
         </form>
         
+        <div class="password-recovery">
+            <a href="/public/forgot-password.html">שכחת סיסמה? לחץ כאן לשחזור</a>
+        </div>
+        
         <div class="alert alert-info">
             <strong>💡 מה תקבל כסוכן:</strong><br>
             • קישור הפניה ייחודי לכל סוכן<br>
@@ -260,6 +296,12 @@
                     alertDiv.remove();
                 }, 5000);
             }
+        }
+
+        // Generate referral code
+        function generateReferralCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase() + 
+                   Math.random().toString(36).substring(2, 4).toUpperCase();
         }
 
         // Check if email is already registered
@@ -352,6 +394,22 @@
             
             // Show loading
             submitBtn.style.display = 'none';
+            loading.style.display = 'block';
+
+            try {
+                const referralCode = generateReferralCode();
+                
+                const formData = {
+                    full_name: document.getElementById('fullName').value.trim(),
+                    email: document.getElementById('email').value.trim(),
+                    phone: document.getElementById('phone').value.trim(),
+                    password: document.getElementById('password').value
+                };
+
+                const response = await fetch(`${API_BASE}/api/agents/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(formData)
                 });
@@ -380,6 +438,11 @@
                 submitBtn.style.display = 'block';
                 loading.style.display = 'none';
             }
+        });
+
+        // Real-time email check
+        document.getElementById('email').addEventListener('blur', (e) => {
+            checkEmailAvailability(e.target.value);
         });
 
         // Real-time password validation

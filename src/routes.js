@@ -212,10 +212,32 @@ export async function registerRoutes(app) {
     }
   });
 
+  // Check if email is available
+  app.post('/api/check-email', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+
+      const db = await getDB();
+      const existing = await db.get('SELECT id FROM agents WHERE email = ?', [email]);
+      
+      res.json({
+        available: !existing,
+        email: email
+      });
+    } catch (error) {
+      console.error('Error checking email:', error);
+      res.status(500).json({ error: 'Failed to check email' });
+    }
+  });
+
   // Agent registration
   app.post('/api/agents/register', async (req, res) => {
     try {
-      const { email, password, full_name } = req.body;
+      const { email, password, full_name, phone } = req.body;
       
       if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' });
@@ -238,8 +260,8 @@ export async function registerRoutes(app) {
       
       // Insert new agent
       const result = await db.run(
-        'INSERT INTO agents (email, password_hash, full_name, referral_code, role) VALUES (?, ?, ?, ?, ?)',
-        [email, passwordHash, full_name || null, referralCode, role]
+        'INSERT INTO agents (email, password_hash, full_name, phone, referral_code, role) VALUES (?, ?, ?, ?, ?, ?)',
+        [email, passwordHash, full_name || null, phone || null, referralCode, role]
       );
 
       // Generate JWT token
