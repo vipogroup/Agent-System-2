@@ -4,6 +4,19 @@ const API = window.location.origin;
 try {
   if (!window.errorLogger) {
     console.warn('Error logger not found. Make sure errorLogger.js is loaded before admin.js');
+    // Create a simple fallback error logger
+    window.errorLogger = {
+      log: function(level, message, data) {
+        console.log(`[${level}] ${message}`, data);
+        return Date.now().toString();
+      },
+      createErrorConsole: function() {
+        console.log('Error console created (fallback)');
+      },
+      getLogs: function() {
+        return [];
+      }
+    };
   }
 } catch (e) {
   console.error('Failed to initialize error logging:', e);
