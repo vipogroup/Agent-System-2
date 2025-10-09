@@ -11,6 +11,54 @@ const __dirname = path.dirname(__filename);
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
+// In-memory storage for demo purposes
+let agents = [
+  {
+    id: 1,
+    full_name: 'יוסי כהן',
+    email: 'yossi@example.com',
+    is_active: true,
+    role: 'agent',
+    totalCommissions: 0,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 2,
+    full_name: 'שרה לוי',
+    email: 'sara@example.com',
+    is_active: true,
+    role: 'agent',
+    totalCommissions: 0,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 3,
+    full_name: 'דוד אברהם',
+    email: 'david@example.com',
+    is_active: false,
+    role: 'agent',
+    totalCommissions: 0,
+    created_at: new Date().toISOString()
+  }
+];
+
+let payouts = [
+  {
+    id: 1,
+    agentName: 'יוסי כהן',
+    amount: 500,
+    requestDate: new Date().toISOString(),
+    status: 'pending'
+  },
+  {
+    id: 2,
+    agentName: 'שרה לוי',
+    amount: 750,
+    requestDate: new Date().toISOString(),
+    status: 'pending'
+  }
+];
+
 // Serve static files
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/vc', express.static(path.join(__dirname, 'vc')));
@@ -37,23 +85,36 @@ app.post('/api/agents/register', (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
   
+  // Check if email already exists
+  const existingAgent = agents.find(agent => agent.email === email);
+  if (existingAgent) {
+    return res.status(400).json({ error: 'Email already registered' });
+  }
+  
   // Generate referral code
   const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase() + 
                       Math.random().toString(36).substring(2, 4).toUpperCase();
   
-  // Mock response
-  const agent = {
+  // Create new agent
+  const newAgent = {
     id: Date.now(),
     full_name,
     email,
     referral_code: referralCode,
     role: 'agent',
+    is_active: true,
+    totalCommissions: 0,
     created_at: new Date().toISOString()
   };
   
+  // Add to agents array
+  agents.push(newAgent);
+  
+  console.log(`New agent registered: ${full_name} (${email}). Total agents: ${agents.length}`);
+  
   res.json({
     success: true,
-    agent,
+    agent: newAgent,
     token: 'mock_token_' + Date.now()
   });
 });
@@ -247,6 +308,145 @@ app.post('/api/debug/register-agent', async (req, res) => {
   }
 });
 
+// Admin API endpoints for dashboard
+app.get('/api/agents/all', (req, res) => {
+  console.log('Getting all agents, current count:', agents.length);
+  
+  res.json({
+    success: true,
+    agents: agents,
+    stats: {
+      activeAgents: agents.filter(a => a.is_active).length,
+      pendingAgents: agents.filter(a => !a.is_active).length,
+      totalCommissions: 1250,
+      payoutRequests: payouts.filter(p => p.status === 'pending').length
+    }
+  });
+});
+
+app.get('/api/admin/agents', (req, res) => {
+  // Redirect to the main agents endpoint
+  res.redirect('/api/agents/all');
+});
+
+app.get('/api/agents', (req, res) => {
+  // Redirect to the main agents endpoint
+  res.redirect('/api/agents/all');
+});
+
+// Delete agent endpoint
+app.delete('/api/admin/agent/:id', (req, res) => {
+  const { id } = req.params;
+  const agentId = parseInt(id);
+  
+  console.log(`Deleting agent with ID: ${agentId}`);
+  
+  // Find the agent to get their name
+  const agentToDelete = agents.find(agent => agent.id === agentId);
+  
+  if (!agentToDelete) {
+    return res.status(404).json({
+      success: false,
+      error: 'Agent not found'
+    });
+  }
+  
+  // Remove agent from the array
+  const initialLength = agents.length;
+  agents = agents.filter(agent => agent.id !== agentId);
+  
+  console.log(`Agent deleted. Agents count: ${initialLength} -> ${agents.length}`);
+  
+  res.json({
+    success: true,
+    message: 'Agent deleted successfully',
+    deleted_agent: agentToDelete.full_name || agentToDelete.email
+  });
+});
+
+// Toggle agent status
+app.post('/api/admin/agent/:id/toggle-status', (req, res) => {
+  const { id } = req.params;
+  const { is_active } = req.body;
+  const agentId = parseInt(id);
+  
+  console.log(`Toggling agent ${agentId} status to: ${!is_active}`);
+  
+  // Find and update the agent
+  const agentIndex = agents.findIndex(agent => agent.id === agentId);
+  
+  if (agentIndex === -1) {
+    return res.status(404).json({
+      success: false,
+      error: 'Agent not found'
+    });
+  }
+  
+  // Toggle the status
+  agents[agentIndex].is_active = !is_active;
+  
+  res.json({
+    success: true,
+    message: 'Agent status updated successfully',
+    agent_id: agentId,
+    new_status: agents[agentIndex].is_active
+  });
+});
+
+// Approve agent
+app.post('/api/admin/agents/:id/approve', (req, res) => {
+  const { id } = req.params;
+  
+  console.log(`Approving agent with ID: ${id}`);
+  
+  res.json({
+    success: true,
+    message: 'Agent approved successfully'
+  });
+});
+
+// Block agent
+app.post('/api/admin/agents/:id/block', (req, res) => {
+  const { id } = req.params;
+  
+  console.log(`Blocking agent with ID: ${id}`);
+  
+  res.json({
+    success: true,
+    message: 'Agent blocked successfully'
+  });
+});
+
+// Get pending payouts
+app.get('/api/payouts/pending', (req, res) => {
+  console.log('Getting pending payouts, current count:', payouts.length);
+  
+  res.json({
+    success: true,
+    payouts: payouts.filter(p => p.status === 'pending')
+  });
+});
+
+// Approve payout
+app.post('/api/admin/payouts/:id/approve', (req, res) => {
+  const { id } = req.params;
+  
+  console.log(`Approving payout with ID: ${id}`);
+  
+  res.json({
+    success: true,
+    message: 'Payout approved successfully'
+  });
+});
+
+// Serve admin dashboard at the root path for easy access
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
+});
+
+// Serve static files for public directory
+app.use('/public', express.static(path.join(__dirname, 'public')));
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
@@ -259,4 +459,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📱 Main site: http://localhost:${PORT}`);
   console.log(`🛒 Sales site: http://localhost:${PORT}/vc/`);
   console.log(`⚡ Health check: http://localhost:${PORT}/health`);
+  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`💾 In-memory storage initialized with ${agents.length} agents`);
 });

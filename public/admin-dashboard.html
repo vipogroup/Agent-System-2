@@ -219,6 +219,12 @@
             <button class="logout-btn" onclick="logout()">יציאה</button>
         </div>
     </div>
+    
+    <div class="container">
+        <div style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 8px; padding: 15px; margin: 20px 0; text-align: center;">
+            <strong>🔄 דמו עם נתונים זמניים:</strong> השינויים נשמרים רק במהלך הפעלת השרת. בעת הפעלה מחדש, הנתונים יחזרו למצב ההתחלתי.
+        </div>
+    </div>
 
     <div class="container">
         <!-- Statistics -->
@@ -665,16 +671,24 @@
             window.location.href = '/public/dashboard-admin.html';
         }
 
+        // Force refresh dashboard data
+        function forceRefresh() {
+            console.log('Force refreshing dashboard...');
+            loadDashboard();
+        }
+
         // Load dashboard on page load and setup auto refresh
         document.addEventListener('DOMContentLoaded', function() {
             loadDashboard();
             
-            // Auto refresh every 30 seconds
-            setInterval(() => {
-                console.log('Auto refreshing dashboard...');
-                loadDashboard();
-            }, 30000);
+            // Auto refresh every 10 seconds for better responsiveness
+            setInterval(loadDashboard, 10000);
+            
+            // Add refresh button functionality
+            const refreshBtn = document.createElement('button');
+            refreshBtn.innerHTML = '🔄 רענן';
+            refreshBtn.className = 'btn btn-secondary';
+            refreshBtn.style.cssText = 'position: fixed; top: 20px; left: 20px; z-index: 1000;';
+            refreshBtn.onclick = forceRefresh;
+            document.body.appendChild(refreshBtn);
         });
-    </script>
-</body>
-</html>
