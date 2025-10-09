@@ -452,7 +452,18 @@
 
         // Logout
         function logout() {
+            // Clear all stored data
             localStorage.removeItem('agentData');
+            localStorage.removeItem('token');
+            localStorage.removeItem('agentToken');
+            localStorage.removeItem('agent_token');
+            localStorage.removeItem('user_data');
+            
+            // Clear session storage as well
+            sessionStorage.clear();
+            
+            // Confirm logout
+            alert('התנתקת בהצלחה');
             window.location.href = '/public/dashboard-agent.html';
         }
 

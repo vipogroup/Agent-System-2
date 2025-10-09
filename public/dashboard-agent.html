@@ -194,12 +194,35 @@
   <script src="/public/js/errorLogger.js"></script>
   <script src="/public/js/agent.js"></script>
   <script>
-    // Initialize error logger in development
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      document.addEventListener('DOMContentLoaded', () => {
-        errorLogger.createErrorConsole();
-      });
+    // Logout function
+    function logout() {
+      // Clear all stored data
+      localStorage.removeItem('token');
+      localStorage.removeItem('agentToken');
+      localStorage.removeItem('agent_token');
+      localStorage.removeItem('agentData');
+      localStorage.removeItem('user_data');
+      
+      // Clear session storage as well
+      sessionStorage.clear();
+      
+      // Redirect to login page
+      alert('התנתקת בהצלחה');
+      window.location.href = '/public/dashboard-agent.html';
     }
+
+    // Add logout functionality when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      const logoutBtn = document.getElementById('btnLogout');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+      }
+      
+      // Initialize error logger in development
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        errorLogger.createErrorConsole();
+      }
+    });
   </script>
 </body>
 </html>
