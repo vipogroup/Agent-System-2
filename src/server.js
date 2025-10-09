@@ -34,6 +34,9 @@ const __dirname = path.dirname(__filename);
 // static demo dashboards
 app.use('/public', express.static(path.join(__dirname, '..', 'public')));
 
+// serve vc website
+app.use('/vc', express.static(path.join(__dirname, '..', 'vc')));
+
 // health endpoint
 app.get('/health', (req, res) => res.json({ ok: true }));
 
@@ -42,38 +45,21 @@ const PORT = process.env.PORT || 10000;
 // Initialize the server
 const startServer = async () => {
   try {
-    // Import modules
-    const { getDB } = await import('./db.js');
-    const { registerRoutes } = await import('./routes.js');
-    const { 
-      registerAdminRoutes, 
-      registerSettingsRoutes, 
-      registerAgentAdminRoutes 
-    } = await import('./admin.js');
-    const bcrypt = await import('bcryptjs');
+    console.log('Starting server initialization...');
     
-    // Initialize database connection
-    const db = await getDB(); // This will create tables if they don't exist
+    // Import modules
+    const { initializeDatabase, initializeAdmin } = await import('./db.js');
+    const { registerRoutes } = await import('./routes.js');
+    const { registerAdminRoutes } = await import('./admin.js');
+    const { registerSettingsRoutes, registerAgentAdminRoutes } = await import('./auth.js');
+    
+    // Initialize database
+    await initializeDatabase();
     console.log('Database initialized');
-
-    // Check if any admin exists, if not, log instructions
-    try {
-      const adminExists = await db.get(
-        'SELECT id FROM agents WHERE role = ?', 
-        ['admin']
-      );
-      
-      if (!adminExists) {
-        console.log('⚠️  No admin user found. Please create an admin user:');
-        console.log('1. Register a new user through the registration form');
-        console.log('2. Update the user role to admin in the database:');
-        console.log('   UPDATE agents SET role = \'admin\' WHERE email = \'your-email@example.com\';');
-      } else {
-        console.log('✅ Admin user exists');
-      }
-    } catch (error) {
-      console.error('❌ Error checking admin user:', error);
-    }
+    
+    // Initialize admin user
+    await initializeAdmin();
+    console.log('✅ Admin user exists');
     
     // Register routes
     registerRoutes(app);
