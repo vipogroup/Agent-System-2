@@ -23,6 +23,103 @@ export async function registerRoutes(app) {
     }
   });
 
+  // Get agent referral link
+  app.get('/api/agent/referral-link/:agentId', async (req, res) => {
+    try {
+      const { agentId } = req.params;
+      const db = await getDB();
+      
+      const agent = await db.get('SELECT referral_code FROM agents WHERE id = ?', [agentId]);
+      
+      if (!agent) {
+        return res.status(404).json({ error: 'Agent not found' });
+      }
+
+      const referralLink = `https://vipogroup.github.io/4Massage-for-sale-VC/?ref=${agent.referral_code}`;
+      
+      res.json({
+        success: true,
+        referral_code: agent.referral_code,
+        referral_link: referralLink,
+        target_site: 'https://vipogroup.github.io/4Massage-for-sale-VC/'
+      });
+    } catch (error) {
+      console.error('Error getting referral link:', error);
+      res.status(500).json({ error: 'Failed to get referral link' });
+    }
+  });
+
+  // Track referral visit
+  app.post('/api/track-visit', async (req, res) => {
+    try {
+      const { referral_code, visitor_ip, user_agent } = req.body;
+      
+      if (!referral_code) {
+        return res.status(400).json({ error: 'Referral code is required' });
+      }
+
+      const db = await getDB();
+      
+      // Find agent by referral code
+      const agent = await db.get('SELECT id FROM agents WHERE referral_code = ?', [referral_code]);
+      
+      if (!agent) {
+        return res.status(404).json({ error: 'Invalid referral code' });
+      }
+
+      // Record the visit
+      await db.run(
+        'INSERT INTO referral_visits (agent_id, referral_code, visitor_ip, user_agent, visited_at) VALUES (?, ?, ?, ?, datetime("now"))',
+        [agent.id, referral_code, visitor_ip || null, user_agent || null]
+      );
+
+      res.json({ success: true, message: 'Visit tracked' });
+    } catch (error) {
+      console.error('Error tracking visit:', error);
+      res.status(500).json({ error: 'Failed to track visit' });
+    }
+  });
+
+  // Record a sale/commission
+  app.post('/api/record-sale', async (req, res) => {
+    try {
+      const { referral_code, sale_amount, customer_email, product_name } = req.body;
+      
+      if (!referral_code || !sale_amount) {
+        return res.status(400).json({ error: 'Referral code and sale amount are required' });
+      }
+
+      const db = await getDB();
+      
+      // Find agent by referral code
+      const agent = await db.get('SELECT id FROM agents WHERE referral_code = ?', [referral_code]);
+      
+      if (!agent) {
+        return res.status(404).json({ error: 'Invalid referral code' });
+      }
+
+      // Calculate commission (10% default)
+      const commissionRate = 0.10;
+      const commissionAmount = sale_amount * commissionRate;
+
+      // Record the sale
+      const saleResult = await db.run(
+        'INSERT INTO sales (agent_id, referral_code, sale_amount, commission_amount, customer_email, product_name, sale_date) VALUES (?, ?, ?, ?, ?, ?, datetime("now"))',
+        [agent.id, referral_code, sale_amount, commissionAmount, customer_email || null, product_name || null]
+      );
+
+      res.json({ 
+        success: true, 
+        message: 'Sale recorded',
+        sale_id: saleResult.lastID,
+        commission_amount: commissionAmount
+      });
+    } catch (error) {
+      console.error('Error recording sale:', error);
+      res.status(500).json({ error: 'Failed to record sale' });
+    }
+  });
+
   // Agent registration
   app.post('/api/agents/register', async (req, res) => {
     try {

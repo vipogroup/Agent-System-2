@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>עיסויים מקצועיים - מבצע מיוחד</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: #ff6b6b;
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            margin: 10px;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+        
+        .features {
+            margin: 2rem 0;
+            text-align: right;
+        }
+        
+        .feature {
+            margin: 1rem 0;
+            font-size: 1.1rem;
+        }
+        
+        .countdown {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+        }
+        
+        .loading {
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌟 עיסויים מקצועיים 🌟</h1>
+        <p class="subtitle">מבצע מיוחד רק עבורך!</p>
+        
+        <div class="features">
+            <div class="feature">💆‍♀️ עיסויים מקצועיים ברמה הגבוהה ביותר</div>
+            <div class="feature">🏠 בנוחות הבית שלך</div>
+            <div class="feature">⭐ מטפלים מוסמכים ומנוסים</div>
+            <div class="feature">💰 מחירים מיוחדים רק השבוע</div>
+        </div>
+        
+        <div class="countdown">
+            <strong>⏰ המבצע מסתיים בעוד:</strong>
+            <div id="countdown">טוען...</div>
+        </div>
+        
+        <a href="#" id="mainCTA" class="cta-button">🔥 לחץ כאן לצפייה במבצע המלא</a>
+        
+        <div class="loading" id="loadingMsg">
+            מכין עבורך את המבצע הטוב ביותר... ⏳
+        </div>
+    </div>
+
+    <script>
+        // Get referral code from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const referralCode = urlParams.get('ref');
+        
+        // Track the visit
+        if (referralCode) {
+            trackVisit(referralCode);
+        }
+        
+        // Track visit function
+        async function trackVisit(refCode) {
+            try {
+                await fetch('/api/track-visit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        referral_code: refCode,
+                        visitor_ip: null, // Will be handled by server
+                        user_agent: navigator.userAgent
+                    })
+                });
+                console.log('Visit tracked for referral code:', refCode);
+            } catch (error) {
+                console.error('Error tracking visit:', error);
+            }
+        }
+        
+        // Countdown timer
+        function startCountdown() {
+            const endTime = new Date();
+            endTime.setDate(endTime.getDate() + 7); // 7 days from now
+            
+            function updateCountdown() {
+                const now = new Date();
+                const timeLeft = endTime - now;
+                
+                if (timeLeft > 0) {
+                    const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                    
+                    document.getElementById('countdown').innerHTML = 
+                        `${days} ימים, ${hours} שעות, ${minutes} דקות, ${seconds} שניות`;
+                } else {
+                    document.getElementById('countdown').innerHTML = 'המבצע הסתיים!';
+                }
+            }
+            
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        }
+        
+        // Redirect to main site after delay
+        setTimeout(() => {
+            const targetUrl = referralCode ? 
+                `https://vipogroup.github.io/4Massage-for-sale-VC/?ref=${referralCode}` : 
+                'https://vipogroup.github.io/4Massage-for-sale-VC/';
+            
+            document.getElementById('mainCTA').href = targetUrl;
+            document.getElementById('loadingMsg').innerHTML = '✅ מוכן! לחץ על הכפתור למעבר לאתר';
+            
+            // Auto redirect after 5 seconds
+            setTimeout(() => {
+                window.location.href = targetUrl;
+            }, 5000);
+        }, 3000);
+        
+        // Start countdown
+        startCountdown();
+        
+        // Add click tracking to CTA button
+        document.getElementById('mainCTA').addEventListener('click', function() {
+            if (referralCode) {
+                // Track click event (optional)
+                fetch('/api/track-click', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        referral_code: referralCode,
+                        action: 'cta_click'
+                    })
+                }).catch(err => console.log('Click tracking failed:', err));
+            }
+        });
+    </script>
+</body>
+</html>
