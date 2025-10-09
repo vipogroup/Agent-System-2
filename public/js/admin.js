@@ -11,17 +11,44 @@ try {
 function getToken(){ return localStorage.getItem('token_admin'); }
 function saveToken(t){ localStorage.setItem('token_admin', t); }
 
+// פונקציות לשמירת והחזרת פרטי התחברות
+function saveCredentials(email, password) {
+  localStorage.setItem('saved_admin_email', email);
+  localStorage.setItem('saved_admin_password', btoa(password)); // הצפנה בסיסית
+  localStorage.setItem('remember_admin', 'true');
+}
+
+function getSavedCredentials() {
+  const remember = localStorage.getItem('remember_admin');
+  if (remember === 'true') {
+    const email = localStorage.getItem('saved_admin_email');
+    const password = localStorage.getItem('saved_admin_password');
+    return {
+      email: email || '',
+      password: password ? atob(password) : '' // פענוח
+    };
+  }
+  return { email: '', password: '' };
+}
+
+function clearSavedCredentials() {
+  localStorage.removeItem('saved_admin_email');
+  localStorage.removeItem('saved_admin_password');
+  localStorage.removeItem('remember_admin');
+}
+
 async function loginAdmin(){
   try {
     const email = document.getElementById('emailA').value;
     const password = document.getElementById('passwordA').value;
+    const rememberMe = document.getElementById('rememberMe').checked;
     
     if (!email || !password) {
       alert('נא למלא אימייל וסיסמה');
       return;
     }
     
-    console.log('Attempting admin login with:', { email, password });
+    console.log('Attempting admin login with:', { email, password, rememberMe });
     
     const response = await fetch(`${API}/api/agents/login`, {
       method: 'POST',
@@ -84,7 +111,16 @@ async function loginAdmin(){
       throw new Error('אין לך הרשאות מנהל');
     }
     
+    // שמירת הטוקן
     saveToken(data.token);
+    
+    // שמירת פרטי התחברות אם המשתמש בחר "זכור אותי"
+    if (rememberMe) {
+      saveCredentials(email, password);
+    } else {
+      clearSavedCredentials();
+    }
+    
     // Redirect to admin dashboard
     window.location.href = '/public/admin-dashboard.html';
     
@@ -288,6 +324,51 @@ function createErrorBadge() {
   }
 }
 
+// פונקציה לטעינת פרטי התחברות שמורים
+function loadSavedCredentials() {
+  const savedCreds = getSavedCredentials();
+  if (savedCreds.email || savedCreds.password) {
+    const emailInput = document.getElementById('emailA');
+    const passwordInput = document.getElementById('passwordA');
+    const rememberCheckbox = document.getElementById('rememberMe');
+    
+    if (emailInput) emailInput.value = savedCreds.email;
+    if (passwordInput) passwordInput.value = savedCreds.password;
+    if (rememberCheckbox) rememberCheckbox.checked = true;
+  }
+}
+
+// פונקציה להוספת כפתור יציאה
+function addLogoutButton() {
+  const header = document.querySelector('header h2');
+  if (header && !document.getElementById('logoutBtn')) {
+    const logoutBtn = document.createElement('button');
+    logoutBtn.id = 'logoutBtn';
+    logoutBtn.textContent = 'יציאה';
+    logoutBtn.style.cssText = `
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    `;
+    logoutBtn.onclick = () => {
+      if (confirm('האם אתה בטוח שברצונך להתנתק?')) {
+        localStorage.removeItem('token_admin');
+        clearSavedCredentials();
+        window.location.href = '/public/dashboard-admin.html';
+      }
+    };
+    header.parentElement.style.position = 'relative';
+    header.parentElement.appendChild(logoutBtn);
+  }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   const token = getToken();
   
@@ -296,6 +377,9 @@ window.addEventListener('DOMContentLoaded', () => {
       window.location.href = '/public/dashboard-admin.html';
       return;
     }
+    
+    // הוספת כפתור יציאה
+    addLogoutButton();
     
     // יצירת error console ו-badge
     if (window.errorLogger) {
@@ -308,10 +392,22 @@ window.addEventListener('DOMContentLoaded', () => {
     loadAgents();
     
   } else {
-    // Login page
+    // Login page - טעינת פרטי התחברות שמורים
+    loadSavedCredentials();
+    
     const btnLoginA = document.getElementById('btnLoginA');
     if (btnLoginA) {
       btnLoginA.addEventListener('click', loginAdmin);
+    }
+    
+    // הוספת אפשרות התחברות עם Enter
+    const passwordInput = document.getElementById('passwordA');
+    if (passwordInput) {
+      passwordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          loginAdmin();
+        }
+      });
     }
   }
 });
