@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת סוכנים פשוטה</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            direction: rtl;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 2px solid #e1e5e9;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .referral-link {
+            background: #e8f5e8;
+            border: 2px solid #28a745;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            word-break: break-all;
+            font-family: monospace;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e1e5e9;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 מערכת סוכנים פשוטה</h1>
+        
+        <!-- Main Menu -->
+        <div id="mainMenu" class="section">
+            <h2>בחר פעולה:</h2>
+            <button class="btn" onclick="showAgentRegistration()">🤝 הרשמת סוכן חדש</button>
+            <button class="btn btn-secondary" onclick="showAgentDashboard()">👤 דשבורד סוכן</button>
+            <button class="btn" onclick="showSalesDemo()">🛒 דמו אתר מכירות</button>
+        </div>
+        
+        <!-- Agent Registration -->
+        <div id="agentRegistration" class="section hidden">
+            <h2>🤝 הרשמת סוכן חדש</h2>
+            <input type="text" id="agentName" placeholder="שם מלא">
+            <input type="email" id="agentEmail" placeholder="כתובת אימייל">
+            <button class="btn" onclick="registerAgent()">הרשם כסוכן</button>
+            <button class="btn btn-secondary" onclick="showMainMenu()">חזור</button>
+        </div>
+        
+        <!-- Agent Dashboard -->
+        <div id="agentDashboard" class="section hidden">
+            <h2>👤 דשבורד סוכן</h2>
+            <div id="agentInfo"></div>
+            <div id="referralSection"></div>
+            <div id="statsSection"></div>
+            <button class="btn btn-secondary" onclick="showMainMenu()">חזור לתפריט</button>
+        </div>
+        
+        <!-- Sales Demo -->
+        <div id="salesDemo" class="section hidden">
+            <h2>🛒 דמו אתר מכירות - כורסת עיסוי VC</h2>
+            <div class="alert alert-info">
+                <strong>💡 הדרכה:</strong> זהו דמו של אתר מכירות. כאשר לקוח מגיע דרך קישור של סוכן, המכירה תיוחס אליו.
+            </div>
+            
+            <div style="text-align: center; margin: 2rem 0;">
+                <img src="https://via.placeholder.com/400x300/4ecdc4/ffffff?text=כורסת+עיסוי+VC" alt="כורסת עיסוי" style="max-width: 100%; border-radius: 10px;">
+                <h3>כורסת עיסוי ביתית מקצועית VC</h3>
+                <p><strong>מחיר מיוחד: ₪2,500</strong></p>
+                <button class="btn" onclick="simulatePurchase()" style="font-size: 18px; padding: 15px 30px;">
+                    🛒 רכישה עכשיו
+                </button>
+            </div>
+            
+            <button class="btn btn-secondary" onclick="showMainMenu()">חזור לתפריט</button>
+        </div>
+    </div>
+
+    <script>
+        // Simple localStorage-based system
+        let currentAgent = null;
+        
+        // Show/Hide sections
+        function showMainMenu() {
+            hideAllSections();
+            document.getElementById('mainMenu').classList.remove('hidden');
+        }
+        
+        function showAgentRegistration() {
+            hideAllSections();
+            document.getElementById('agentRegistration').classList.remove('hidden');
+        }
+        
+        function showAgentDashboard() {
+            hideAllSections();
+            loadAgentDashboard();
+            document.getElementById('agentDashboard').classList.remove('hidden');
+        }
+        
+        function showSalesDemo() {
+            hideAllSections();
+            document.getElementById('salesDemo').classList.remove('hidden');
+            
+            // Check if there's a referral code in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const refCode = urlParams.get('ref');
+            if (refCode) {
+                showAlert('✅ הגעת דרך קישור של סוכן! קוד: ' + refCode, 'success');
+                localStorage.setItem('currentReferral', refCode);
+            }
+        }
+        
+        function hideAllSections() {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+        }
+        
+        // Agent Registration
+        function registerAgent() {
+            const name = document.getElementById('agentName').value;
+            const email = document.getElementById('agentEmail').value;
+            
+            if (!name || !email) {
+                alert('נא למלא את כל השדות');
+                return;
+            }
+            
+            // Generate referral code
+            const refCode = generateReferralCode();
+            
+            // Save agent
+            const agent = {
+                id: Date.now(),
+                name: name,
+                email: email,
+                referralCode: refCode,
+                visits: 0,
+                sales: 0,
+                commissions: 0,
+                createdAt: new Date().toISOString()
+            };
+            
+            localStorage.setItem('agent_' + agent.id, JSON.stringify(agent));
+            localStorage.setItem('currentAgentId', agent.id);
+            currentAgent = agent;
+            
+            showAlert('🎉 הרשמה הושלמה בהצלחה! קוד ההפניה שלך: ' + refCode, 'success');
+            
+            // Clear form
+            document.getElementById('agentName').value = '';
+            document.getElementById('agentEmail').value = '';
+            
+            // Show dashboard
+            setTimeout(() => {
+                showAgentDashboard();
+            }, 2000);
+        }
+        
+        // Load Agent Dashboard
+        function loadAgentDashboard() {
+            const agentId = localStorage.getItem('currentAgentId');
+            if (!agentId) {
+                document.getElementById('agentInfo').innerHTML = '<div class="alert alert-info">לא נמצא סוכן רשום. נא להירשם תחילה.</div>';
+                return;
+            }
+            
+            const agent = JSON.parse(localStorage.getItem('agent_' + agentId));
+            if (!agent) {
+                document.getElementById('agentInfo').innerHTML = '<div class="alert alert-info">לא נמצא סוכן רשום. נא להירשם תחילה.</div>';
+                return;
+            }
+            
+            currentAgent = agent;
+            
+            // Agent Info
+            document.getElementById('agentInfo').innerHTML = `
+                <div class="alert alert-success">
+                    <strong>שלום ${agent.name}!</strong><br>
+                    אימייל: ${agent.email}<br>
+                    תאריך הרשמה: ${new Date(agent.createdAt).toLocaleDateString('he-IL')}
+                </div>
+            `;
+            
+            // Referral Link
+            const referralLink = window.location.origin + window.location.pathname + '?ref=' + agent.referralCode;
+            document.getElementById('referralSection').innerHTML = `
+                <h3>🔗 הקישור הייחודי שלך:</h3>
+                <div class="referral-link" id="referralLink">${referralLink}</div>
+                <button class="btn" onclick="copyReferralLink()">📋 העתק קישור</button>
+                <button class="btn" onclick="shareToWhatsApp()">📱 שתף בוואטסאפ</button>
+                <button class="btn" onclick="testReferralLink()">🧪 בדוק קישור</button>
+            `;
+            
+            // Stats
+            document.getElementById('statsSection').innerHTML = `
+                <h3>📊 הסטטיסטיקות שלך:</h3>
+                <div class="stats">
+                    <div class="stat-card">
+                        <h4>ביקורים</h4>
+                        <div style="font-size: 2rem; color: #4ecdc4;">${agent.visits}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>מכירות</h4>
+                        <div style="font-size: 2rem; color: #28a745;">${agent.sales}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>עמלות</h4>
+                        <div style="font-size: 2rem; color: #ff6b6b;">₪${agent.commissions}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Utility Functions
+        function generateReferralCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase() + 
+                   Math.random().toString(36).substring(2, 4).toUpperCase();
+        }
+        
+        function copyReferralLink() {
+            const linkElement = document.getElementById('referralLink');
+            const textArea = document.createElement('textarea');
+            textArea.value = linkElement.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showAlert('✅ הקישור הועתק ללוח!', 'success');
+        }
+        
+        function shareToWhatsApp() {
+            const referralLink = document.getElementById('referralLink').textContent;
+            const message = `היי! 👋\n\nאני רוצה להציע לך מוצר מדהים - כורסת עיסוי ביתית מקצועית במחיר מיוחד!\n\n🔗 לחץ כאן לרכישה:\n${referralLink}\n\n💰 מחיר מיוחד: 2,500₪ בלבד!\n\nתודה! 😊`;
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+        
+        function testReferralLink() {
+            const referralLink = document.getElementById('referralLink').textContent;
+            window.open(referralLink, '_blank');
+        }
+        
+        function simulatePurchase() {
+            const refCode = localStorage.getItem('currentReferral');
+            
+            if (refCode) {
+                // Find agent by referral code
+                let foundAgent = null;
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('agent_')) {
+                        const agent = JSON.parse(localStorage.getItem(key));
+                        if (agent.referralCode === refCode) {
+                            foundAgent = agent;
+                            break;
+                        }
+                    }
+                }
+                
+                if (foundAgent) {
+                    // Update agent stats
+                    foundAgent.visits += 1;
+                    foundAgent.sales += 1;
+                    foundAgent.commissions += 250; // 10% of 2500
+                    
+                    localStorage.setItem('agent_' + foundAgent.id, JSON.stringify(foundAgent));
+                    
+                    showAlert(`🎉 רכישה בוצעה בהצלחה!\n\nהסוכן ${foundAgent.name} יקבל עמלה של ₪250`, 'success');
+                    
+                    // Clear referral
+                    localStorage.removeItem('currentReferral');
+                } else {
+                    showAlert('⚠️ לא נמצא סוכן עם קוד ההפניה', 'info');
+                }
+            } else {
+                showAlert('✅ רכישה בוצעה בהצלחה!\n(ללא הפניה של סוכן)', 'success');
+            }
+        }
+        
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = message.replace(/\n/g, '<br>');
+            
+            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if there's a referral code in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const refCode = urlParams.get('ref');
+            
+            if (refCode) {
+                localStorage.setItem('currentReferral', refCode);
+                showSalesDemo();
+            } else {
+                showMainMenu();
+            }
+        });
+    </script>
+</body>
+</html>
