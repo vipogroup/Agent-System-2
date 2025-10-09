@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>כורסת עיסוי ביתית VC - קונים חכם</title>
+    <!-- Meta tags -->
+    <meta name="description" content="כורסת עיסוי ביתית מקצועית VC - חוויית עיסוי מקצועית בנוחות הבית שלך">
+    <meta property="og:title" content="כורסת עיסוי ביתית מקצועית VC">
+    <meta property="og:description" content="חוויית עיסוי מקצועית בנוחות הבית שלך">
+    <meta property="og:image" content="images/page_1.webp">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/swiper@8/swiper-bundle.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Share Styles CSS -->
+    <link rel="stylesheet" href="assets/css/share-styles.css">
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="https://via.placeholder.com/32x32/3498db/ffffff?text=V" type="image/x-icon">
+</head>
+<body>
+    <!-- Header -->
+    <header class="product-header">
+        <div class="container">
+            <div class="row py-3 align-items-center">
+                <div class="col-2 text-start">
+                    <a href="https://vipogroup.github.io/vipo-products/" class="back-button" aria-label="חזרה לדף הקודם">
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="col-8 text-center d-flex justify-content-center">
+                    <a href="https://vipocatalog.github.io/LTD/?lang=he" target="_blank" class="btn btn-lg logo-btn animate__animated animate__fadeIn" style="margin: 0 auto;">
+                        <span class="btn-text">VIPO CONNECT</span>
+                        <i class="fas fa-arrow-left ms-2"></i>
+                    </a>
+                </div>
+                <div class="col-2 text-end">
+                    <button class="share-button" aria-label="שתף מוצר">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Image Gallery -->
+        <div class="gallery-container" style="position: relative; margin: 20px 0; padding: 15px 0; background: #f8f9fa; border-radius: 8px;">
+            <!-- Main Image -->
+            <div class="main-image-container" style="width: 100%; height: 50vh; max-height: 400px; overflow: hidden; position: relative; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 10px;">
+                <img id="mainImage" src="assets/images/1.webp" alt="כורסת עיסוי VC" style="width: 100%; height: 100%; object-fit: contain; display: block;">
+                <div class="gallery-badge" style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8em;">
+                    <i class="fas fa-images"></i> 7 תמונות
+                </div>
+            </div>
+            
+            <!-- Thumbnails -->
+            <div class="thumbnails-container" style="display: flex; overflow-x: auto; gap: 8px; padding: 0 10px 10px; -webkit-overflow-scrolling: touch;">
+                <div class="thumbnail" data-src="assets/images/1.webp" style="flex: 0 0 auto; width: 80px; height: 60px; border: 2px solid #ddd; border-radius: 6px; overflow: hidden; cursor: pointer; transition: all 0.3s ease;">
+                    <img src="assets/images/1.webp" alt="תמונה 1" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div class="thumbnail" data-src="assets/images/2.webp" style="flex: 0 0 auto; width: 80px; height: 60px; border: 2px solid #ddd; border-radius: 6px; overflow: hidden; cursor: pointer; transition: all 0.3s ease;">
+                    <img src="assets/images/2.webp" alt="תמונה 2" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div class="thumbnail" data-src="assets/images/3.webp" style="flex: 0 0 auto; width: 80px; height: 60px; border: 2px solid #ddd; border-radius: 6px; overflow: hidden; cursor: pointer; transition: all 0.3s ease;">
+                    <img src="assets/images/3.webp" alt="תמונה 3" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div class="thumbnail" data-src="assets/images/4.webp" style="flex: 0 0 auto; width: 80px; height: 60px; border: 2px solid #ddd; border-radius: 6px; overflow: hidden; cursor: pointer; transition: all 0.3s ease;">
+                    <img src="assets/images/4.webp" alt="תמונה 4" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div class="thumbnail" data-src="assets/images/5.webp" style="flex: 0 0 auto; width: 80px; height: 60px; border: 2px solid #ddd; border-radius: 6px; overflow: hidden; cursor: pointer; transition: all 0.3s ease;">
+                    <img src="assets/images/5.webp" alt="תמונה 5" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div class="thumbnail" data-src="assets/images/6.webp" style="flex: 0 0 auto; width: 80px; height: 60px; border: 2px solid #ddd; border-radius: 6px; overflow: hidden; cursor: pointer; transition: all 0.3s ease;">
+                    <img src="assets/images/6.webp" alt="תמונה 6" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div class="thumbnail" data-src="assets/images/7.webp" style="flex: 0 0 auto; width: 80px; height: 60px; border: 2px solid #ddd; border-radius: 6px; overflow: hidden; cursor: pointer; transition: all 0.3s ease;">
+                    <img src="assets/images/7.webp" alt="תמונה 7" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Container for Content -->
+        <div class="container">
+            <!-- Product Info -->
+            <section class="product-info text-center my-4 animate__animated animate__fadeIn animate__delay-1s">
+                <div class="product-badge" style="background-color: #ff0000; color: white; font-size: 1.2em; padding: 5px 15px; border-radius: 20px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: inline-block; line-height: 1.2;">🚨 רכישה במחיר מפעל 🚨</div>
+                <h1 class="product-title">כורסת עיסוי ביתית VC - חוויית עיסוי מקצועית אצלך בבית</h1>
+                <div class="product-subtitle">כורסת עיסוי מתקדמת עם טכנולוגיית VC, עיצוב יוקרתי, נוחות מקסימלית ותוצאות מורגשות כבר מהשימוש הראשון.</div>
+                <div class="product-price my-3">
+                    <div class="price-tag">
+                        <span class="current-price">₪4,900</span>
+                        <span class="original-price" style="font-size: 1.5em; color: red; font-weight: bold;">₪12,800</span>
+                    </div>
+                    <div class="discount-badge">חיסכון של ₪7,900</div>
+                </div>
+                
+                <!-- Video Gallery -->
+                <div class="video-gallery-container" style="background: #f8f9fa; padding: 15px 0; margin: 20px 0; border-radius: 8px;">
+                    <div class="video-gallery">
+                        <h4 class="text-center mb-3">סרטון הדגמה</h4>
+                        <div style="width: 100%; height: 50vh; max-height: 400px; overflow: hidden; position: relative; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <video width="100%" height="100%" controls autoplay muted loop style="object-fit: contain; display: block;">
+                                <source src="assets/1.mp4" type="video/mp4">
+                                הדפדפן שלך לא תומך בנגן וידאו.
+                            </video>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Gallery Moved Below Price -->
+                <a href="https://chat.whatsapp.com/C5C5uo6lFXCEVGjbj4WOh1" target="_blank" class="btn btn-lg join-group-btn">
+                    <span class="btn-text">לרכישה במחיר מפעל</span>
+                    <i class="fas fa-arrow-left ms-2"></i>
+                </a>
+            </section>
+
+            <!-- Countdown -->
+            <div class="container countdown-section">
+                <h3 class="countdown-title">המכולה מגיעה בעוד:</h3>
+                <div class="countdown-timer">
+                    <div class="countdown-item">
+                        <div class="countdown-value days">45</div>
+                        <div class="countdown-label">ימים</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value hours">00</div>
+                        <div class="countdown-label">שעות</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value minutes">00</div>
+                        <div class="countdown-label">דקות</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value seconds">00</div>
+                        <div class="countdown-label">שניות</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Accordion -->
+            <section class="product-accordion my-4 animate__animated animate__fadeIn animate__delay-1s">
+                <h3 class="section-title text-center mb-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    מידע נוסף על המוצר
+                </h3>
+                <div class="accordion" id="productAccordion">
+                    <!-- יתרונות המוצר -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                <i class="fas fa-star me-2"></i> יתרונות המוצר
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#productAccordion">
+                            <div class="accordion-body">
+                                <div class="advantages-container">
+                                    <div class="advantage-item">
+                                        <div class="advantage-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <div class="advantage-content">
+                                            <h5>טכנולוגיית עיסוי V9Z מתקדמת</h5>
+                                            <p>כורסת העיסוי מצוידת ב-5 מנועים חזקים המדמים מגע אנושי ומספקים עיסוי מקצועי בנקודות לחץ מדויקות בכל הגוף.</p>
+                                        </div>
+                                    </div>
+                                    <div class="advantage-item">
+                                        <div class="advantage-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <div class="advantage-content">
+                                            <h5>מערכת חימום גרפן יוקרתית</h5>
+                                            <p>חימום גרפן מתקדם לגב, מותניים ורגליים משפר את זרימת הדם ומסייע בהקלה על כאבים ומתחים.</p>
+                                        </div>
+                                    </div>
+                                    <div class="advantage-item">
+                                        <div class="advantage-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <div class="advantage-content">
+                                            <h5>שליטה קולית חכמה</h5>
+                                            <p>הפעלה קלה באמצעות פקודות קוליות ומסך LCD גדול ונוח לשימוש. ניתן לבחור בין 5 תוכניות עיסוי מותאמות אישית.</p>
+                                        </div>
+                                    </div>
+                                    <div class="advantage-item">
+                                        <div class="advantage-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <div class="advantage-content">
+                                            <h5>חוויית עיסוי מקיפה</h5>
+                                            <p>מערכת רמקולים HIFI מובנית להשמעת מוזיקה מרגיעה בזמן העיסוי, ועיצוב ארגונומי המבטיח נוחות מקסימלית.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- מפרט טכני -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                <i class="fas fa-cogs me-2"></i> מפרט טכני
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#productAccordion">
+                            <div class="accordion-body">
+                                <div class="specs-container">
+                                    <div class="specs-header">
+                                        <h5>מפרט טכני מלא</h5>
+                                        <p class="specs-subtitle">פירוט מלא של כל המפרטים הטכניים של המוצר</p>
+                                    </div>
+                                    <div class="specs-table-container">
+                                        <table class="table specs-table">
+                                            <tbody>
+                                                <tr>
+                                                    <th><i class="fas fa-cube me-2"></i> חומרים:</th>
+                                                    <td>PU + פלדה</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="fas fa-bolt me-2"></i> מתח:</th>
+                                                    <td>110“240V</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="fas fa-wave-square me-2"></i> תדר:</th>
+                                                    <td>50“60Hz</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="fas fa-music me-2"></i> מוזיקה:</th>
+                                                    <td>כן</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="fas fa-palette me-2"></i> צבעים זמינים:</th>
+                                                    <td>חום / בז׳ / כחול</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="fas fa-cogs me-2"></i> מנועים:</th>
+                                                    <td>5 מנועים</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="fas fa-microphone me-2"></i> שליטה קולית:</th>
+                                                    <td>שליטה קולית חכמה</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="fas fa-spa me-2"></i> מצבי עיסוי:</th>
+                                                    <td>5 מצבים מותאמים אישית</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="fas fa-hands me-2"></i> סוגי עיסויים:</th>
+                                                    <td>צוואר וכתפיים, מותניים, רגליים, כריות אוויר, רולר רגליים</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="fas fa-fire me-2"></i> מערכת חימום:</th>
+                                                    <td>חימום גרפן לגב, מותניים ורגליים</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="fas fa-plus-circle me-2"></i> תוספות:</th>
+                                                    <td>רמקולים HIFI, מסך LCD גדול, עור PU עמיד ובטיחותי</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="fas fa-shield-alt me-2"></i> אחריות:</th>
+                                                    <td>שנתיים אחריות מלאה</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="fas fa-clock me-2"></i> זמן עבודה:</th>
+                                                    <td>15“30 דקות</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="fas fa-fire me-2"></i> חימום:</th>
+                                                    <td>כן</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="fas fa-plug me-2"></i> הספק:</th>
+                                                    <td>2000W</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="fas fa-plug me-2"></i> מתח עבודה:</th>
+                                                    <td>AC 220–240V, 50–60Hz</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="specs-footer">
+                                        <div class="certification-badges">
+                                            <span class="cert-badge"><i class="fas fa-award"></i> תקן ישראלי</span>
+                                            <span class="cert-badge"><i class="fas fa-check-circle"></i> אישור CE</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- שאלות נפוצות -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                <i class="fas fa-question-circle me-2"></i> שאלות נפוצות
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#productAccordion">
+                            <div class="accordion-body">
+                                <div class="faq-container">
+                                    <div class="faq-item">
+                                        <div class="faq-question">
+                                            <i class="fas fa-question me-2"></i>
+                                            <h5>איך עובדת קבוצת הרכישה?</h5>
+                                        </div>
+                                        <div class="faq-answer">
+                                            <p>קבוצת הרכישה פועלת בשיטת "כוח הקנייה המשותף". ככל שיותר אנשים מצטרפים לקבוצה, המחיר לכל המשתתפים יורד. הקבוצה נסגרת בתאריך היעד ואז מתבצעת ההזמנה המרוכזת מהיצרן במחיר הסופי שנקבע.</p>
+                                        </div>
+                                    </div>
+                                    <div class="faq-item">
+                                        <div class="faq-question">
+                                            <i class="fas fa-question me-2"></i>
+                                            <h5>מתי אקבל את המוצר?</h5>
+                                        </div>
+                                        <div class="faq-answer">
+                                            <p>לאחר סגירת הקבוצה, זמן האספקה המשוער הוא כ-14-21 ימי עסקים. תקבלו הודעת עדכון במייל וב-SMS כאשר המשלוח יצא לדרך ותוכלו לעקוב אחריו באזור האישי.</p>
+                                        </div>
+                                    </div>
+                                    <div class="faq-item">
+                                        <div class="faq-question">
+                                            <i class="fas fa-question me-2"></i>
+                                            <h5>האם יש אפשרות החזרה?</h5>
+                                        </div>
+                                        <div class="faq-answer">
+                                            <p>בהחלט! אנו מאפשרים החזרת מוצרים תוך 14 יום מקבלת המשלוח, כל עוד המוצר באריזתו המקורית ולא נעשה בו שימוש. ההחזרה היא ללא שאלות והכסף מוחזר במלואו (למעט דמי משלוח).</p>
+                                        </div>
+                                    </div>
+                                    <div class="faq-item">
+                                        <div class="faq-question">
+                                            <i class="fas fa-question me-2"></i>
+                                            <h5>האם אני משלם עכשיו או רק בסוף הקבוצה?</h5>
+                                        </div>
+                                        <div class="faq-answer">
+                                            <p>התשלום מתבצע בעת ההרשמה לקבוצת הרכישה. אם המחיר ירד בסיום הקבוצה, תקבלו החזר כספי אוטומטי לאמצעי התשלום שבו השתמשתם.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- שיתוף והפניה -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingFour">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                <i class="fas fa-share-alt me-2"></i> שיתוף והפניה
+                            </button>
+                        </h2>
+                        <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#productAccordion">
+                            <div class="accordion-body">
+                                <div class="referral-program">
+                                    <div class="referral-header">
+                                        <div class="referral-icon">
+                                            <i class="fas fa-gift"></i>
+                                        </div>
+                                        <div class="referral-title">
+                                            <h4>שיתפת? הרווחת! <span class="sparkle">✨</span></h4>
+                                            <p class="lead">קבל קוד קופון אישי לשתף עם חברים</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="referral-description">
+                                        <div class="referral-badge">
+                                            <span class="badge-text">₪150</span>
+                                        </div>
+                                        <p>כל חבר שרוכש דרכך - אתה זוכה ב-150 ש"ח הנחה ברכישה הבאה!</p>
+                                    </div>
+                                    
+                                    <div class="coupon-code-container my-4">
+                                        <div class="coupon-code">
+                                            <input type="text" value="FRIEND20" id="couponCode" readonly>
+                                            <button class="copy-btn" onclick="copyToClipboard()"><i class="far fa-copy"></i> העתק קוד</button>
+                                        </div>
+                                        <div class="copy-message" id="copyMessage">הקוד הועתק!</div>
+                                    </div>
+                                    
+                                    <div class="share-buttons mt-4">
+                                        <p class="share-title">שתף עכשיו:</p>
+                                        <div class="social-buttons">
+                                            <a href="https://chat.whatsapp.com/FbGe3b0vcZN6hL2hxeveOR" target="_blank" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> וואטסאפ</a>
+                                            <a href="#" class="btn btn-facebook"><i class="fab fa-facebook-f"></i> פייסבוק</a>
+                                            <a href="#" class="btn btn-telegram"><i class="fab fa-telegram-plane"></i> טלגרם</a>
+                                            <a href="#" class="btn btn-email"><i class="far fa-envelope"></i> אימייל</a>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="referral-footer mt-4">
+                                        <div class="referral-steps">
+                                            <div class="step">
+                                                <div class="step-number">1</div>
+                                                <div class="step-text">שתף את הקוד</div>
+                                            </div>
+                                            <div class="step-arrow">
+                                                <i class="fas fa-arrow-left"></i>
+                                            </div>
+                                            <div class="step">
+                                                <div class="step-number">2</div>
+                                                <div class="step-text">חברים רוכשים</div>
+                                            </div>
+                                            <div class="step-arrow">
+                                                <i class="fas fa-arrow-left"></i>
+                                            </div>
+                                            <div class="step">
+                                                <div class="step-number">3</div>
+                                                <div class="step-text">קבל ₪150</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Bottom CTA -->
+            <div class="container">
+                <div class="bottom-cta">
+                    <h4>מוצרים נוספים במחיר מפעל</h4>
+                    <p>רוכשים חכם ונלחמים ביוקר המחייה</p>
+                    <a href="https://vipogroup.github.io/group-buy/#about-vipo" target="_blank" class="btn btn-lg">לקטלוג המוצרים <i class="fas fa-arrow-left"></i></a>
+                    <div class="payment-security mt-2">
+                        <i class="fas fa-lock"></i> תשלום מאובטח
+                        <i class="fas fa-shield-alt ms-2"></i> הבטחת מחיר הנמוך ביותר
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </main>
+
+    <!-- WhatsApp Float Button -->
+    <div class="whatsapp-float">
+        <a href="https://wa.me/972587009938" target="_blank">
+            <i class="fab fa-whatsapp"></i>
+            <span>צור קשר</span>
+        </a>
+    </div>
+
+    
+    <!-- Footer -->
+    <footer class="product-footer mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <div class="logo mb-3">VIPO</div>
+                    <p class="copyright">&copy; 2025 VIPO. כל הזכויות שמורות.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Swiper JS -->
+    <script src="https://unpkg.com/swiper@8/swiper-bundle.min.js"></script>
+    <script>
+        // Gallery functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded, initializing gallery...');
+            
+            // Get all thumbnails and main container
+            const thumbnails = document.querySelectorAll('.thumbnail');
+            const mainContainer = document.querySelector('.main-image-container');
+            let mainImage = document.getElementById('mainImage');
+            let currentImageIndex = 0;
+            let slideInterval;
+            
+            // Function to go to next image
+            function nextImage() {
+                currentImageIndex = (currentImageIndex + 1) % thumbnails.length;
+                if (thumbnails[currentImageIndex].classList.contains('video-thumbnail')) {
+                    // Skip video thumbnails in auto-slide
+                    currentImageIndex = (currentImageIndex + 1) % thumbnails.length;
+                }
+                showImage(currentImageIndex);
+            }
+            
+            // Function to show specific image by index
+            function showImage(index) {
+                if (index >= 0 && index < thumbnails.length) {
+                    const imgSrc = thumbnails[index].getAttribute('data-src');
+                    if (imgSrc) {
+                        updateMainImage(imgSrc);
+                        // Update active thumbnail
+                        thumbnails.forEach((thumb, i) => {
+                            thumb.style.borderColor = i === index ? '#007bff' : '#ddd';
+                        });
+                        currentImageIndex = index;
+                    }
+                }
+            }
+            
+            // Start auto slide
+            function startSlideShow() {
+                stopSlideShow(); // Clear any existing interval
+                slideInterval = setInterval(nextImage, 2000); // Change image every 2 seconds
+            }
+            
+            // Stop auto slide
+            function stopSlideShow() {
+                if (slideInterval) {
+                    clearInterval(slideInterval);
+                    slideInterval = null;
+                }
+            }
+            
+            // Function to update main image
+            function updateMainImage(src) {
+                if (!mainImage) {
+                    // If mainImage doesn't exist, create it
+                    mainImage = document.createElement('img');
+                    mainImage.id = 'mainImage';
+                    mainImage.alt = 'כורסת עיסוי VC';
+                    mainImage.style.width = '100%';
+                    mainImage.style.height = '100%';
+                    mainImage.style.objectFit = 'contain';
+                    mainImage.style.display = 'block';
+                    
+                    // Clear container and add main image
+                    if (mainContainer) {
+                        mainContainer.innerHTML = '';
+                        mainContainer.appendChild(mainImage);
+                        
+                        // Add gallery badge
+                        const badge = document.createElement('div');
+                        badge.className = 'gallery-badge';
+                        badge.style.position = 'absolute';
+                        badge.style.top = '10px';
+                        badge.style.left = '10px';
+                        badge.style.background = 'rgba(0,0,0,0.7)';
+                        badge.style.color = 'white';
+                        badge.style.padding = '5px 10px';
+                        badge.style.borderRadius = '15px';
+                        badge.style.fontSize = '0.8em';
+                        badge.innerHTML = '<i class="fas fa-images"></i> 7 תמונות';
+                        mainContainer.appendChild(badge);
+                    }
+                }
+                
+                // Update image source
+                if (mainImage) {
+                    mainImage.src = src;
+                    console.log('Updated main image to:', src);
+                }
+            }
+            
+            // Initialize first image and start slideshow
+            if (thumbnails.length > 0) {
+                showImage(0); // Show first image and highlight thumbnail
+                startSlideShow(); // Start auto slideshow
+                
+                // Pause on hover
+                mainContainer.addEventListener('mouseenter', stopSlideShow);
+                mainContainer.addEventListener('mouseleave', startSlideShow);
+                
+                // Pause on touch
+                mainContainer.addEventListener('touchstart', stopSlideShow);
+                mainContainer.addEventListener('touchend', startSlideShow);
+            }
+
+            // Handle thumbnail clicks
+            thumbnails.forEach(thumb => {
+                thumb.addEventListener('click', function() {
+                    console.log('Thumbnail clicked:', this);
+                    
+                    // Remove active class from all thumbnails
+                    thumbnails.forEach(t => t.style.borderColor = '#ddd');
+                    
+                    // Add active class to clicked thumbnail
+                    this.style.borderColor = '#007bff';
+                    
+                    // If it's a video thumbnail
+                    if (this.classList.contains('video-thumbnail')) {
+                        const videoUrl = this.getAttribute('data-video');
+                        console.log('Loading video:', videoUrl);
+                        
+                        if (mainContainer) {
+                            // Create video container
+                            const videoContainer = document.createElement('div');
+                            videoContainer.className = 'video-container';
+                            videoContainer.style.width = '100%';
+                            videoContainer.style.height = '100%';
+                            videoContainer.style.position = 'relative';
+                            videoContainer.style.background = '#000';
+                            
+                            // Create video element
+                            const video = document.createElement('video');
+                            video.id = 'productVideo';
+                            video.controls = true;
+                            video.style.width = '100%';
+                            video.style.height = '100%';
+                            video.style.objectFit = 'contain';
+                            
+                            // Add video source
+                            const source = document.createElement('source');
+                            source.src = videoUrl;
+                            source.type = 'video/mp4';
+                            video.appendChild(source);
+                            video.appendChild(document.createTextNode('הדפדפן שלך לא תומך בהצגת וידאו.'));
+                            
+                            // Add close button
+                            const closeBtn = document.createElement('button');
+                            closeBtn.id = 'closeVideo';
+                            closeBtn.innerHTML = '×';
+                            closeBtn.style.position = 'absolute';
+                            closeBtn.style.top = '10px';
+                            closeBtn.style.right = '10px';
+                            closeBtn.style.background = 'rgba(0,0,0,0.7)';
+                            closeBtn.style.color = 'white';
+                            closeBtn.style.border = 'none';
+                            closeBtn.style.width = '30px';
+                            closeBtn.style.height = '30px';
+                            closeBtn.style.borderRadius = '50%';
+                            closeBtn.style.cursor = 'pointer';
+                            closeBtn.style.zIndex = '10';
+                            
+                            // Add gallery badge
+                            const badge = document.createElement('div');
+                            badge.className = 'gallery-badge';
+                            badge.style.position = 'absolute';
+                            badge.style.top = '10px';
+                            badge.style.left = '10px';
+                            badge.style.background = 'rgba(0,0,0,0.7)';
+                            badge.style.color = 'white';
+                            badge.style.padding = '5px 10px';
+                            badge.style.borderRadius = '15px';
+                            badge.style.fontSize = '0.8em';
+                            badge.innerHTML = '<i class="fas fa-images"></i> 7 תמונות';
+                            
+                            // Add elements to container
+                            videoContainer.appendChild(video);
+                            videoContainer.appendChild(closeBtn);
+                            
+                            // Clear and update container
+                            mainContainer.innerHTML = '';
+                            mainContainer.appendChild(videoContainer);
+                            mainContainer.appendChild(badge);
+                            
+                            // Add close button event
+                            closeBtn.addEventListener('click', function(e) {
+                                e.stopPropagation();
+                                console.log('Close button clicked');
+                                
+                                const firstThumb = document.querySelector('.thumbnail');
+                                if (firstThumb) {
+                                    const firstImgSrc = firstThumb.getAttribute('data-src');
+                                    if (firstImgSrc) {
+                                        updateMainImage(firstImgSrc);
+                                        // Reset active thumbnail
+                                        thumbnails.forEach((t, i) => {
+                                            t.style.borderColor = i === 0 ? '#007bff' : '#ddd';
+                                        });
+                                    }
+                                }
+                            });
+                            
+                            // Play video
+                            video.play().catch(error => {
+                                console.error('Error playing video:', error);
+                            });
+                        }
+                    } else {
+                        // It's an image thumbnail
+                        const imgSrc = this.getAttribute('data-src');
+                        console.log('Loading image:', imgSrc);
+                        if (imgSrc) {
+                            updateMainImage(imgSrc);
+                            // Update current index and reset slideshow
+                            currentImageIndex = Array.from(thumbnails).indexOf(this);
+                            startSlideShow();
+                        }    
+                    }
+                });
+            });
+            
+            // Make first thumbnail active by default
+            if (thumbnails.length > 0) {
+                thumbnails[0].style.borderColor = '#007bff';
+                // No need to load image here as it's already done in initialization
+            }
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                // Adjust main image container height for mobile
+                const mainContainer = document.querySelector('.main-image-container');
+                if (window.innerWidth < 768) {
+                    mainContainer.style.height = '40vh';
+                    mainContainer.style.maxHeight = 'none';
+                } else {
+                    mainContainer.style.height = '50vh';
+                    mainContainer.style.maxHeight = '400px';
+                }
+            });
+            
+            // Trigger initial resize
+            window.dispatchEvent(new Event('resize'));
+        });
+    </script>
+    <script src="assets/js/main.js"></script>
+    <!-- Product Loader JS -->
+    <script src="assets/js/product-loader.js"></script>
+    <script>
+        // קוד להעתקת קוד הקופון
+        function copyToClipboard() {
+            const couponCode = document.getElementById('couponCode');
+            const copyMessage = document.getElementById('copyMessage');
+            
+            couponCode.select();
+            document.execCommand('copy');
+            
+            copyMessage.style.opacity = '1';
+            setTimeout(() => {
+                copyMessage.style.opacity = '0';
+            }, 2000);
+        }
+        
+        // אנימציה לכפתור הצטרפות
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize join button animations
+            const joinButtons = document.querySelectorAll('.join-group-btn');
+            joinButtons.forEach(button => {
+                button.addEventListener('mouseover', function() {
+                    this.classList.add('pulse');
+                });
+                button.addEventListener('mouseout', function() {
+                    this.classList.remove('pulse');
+                });
+            });
+            
+            // Start the countdown timer
+            startCountdown();
+        });
+    </script>
+
+    <!-- קוד מעקב הפניות סוכנים -->
+    <script>
+        (function() {
+            // כתובת השרת - עדכן בהתאם לשרת שלך
+            const TRACKING_SERVER = 'https://agent-system-2.onrender.com'; // או http://192.168.10.172:3000 לשרת מקומי
+            
+            // קבלת קוד ההפניה מה-URL
+            function getReferralCode() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('ref');
+            }
+            
+            // שמירת קוד ההפניה בעוגיה
+            function saveReferralCode(refCode) {
+                if (refCode) {
+                    // שמירה לשבוע
+                    const expiryDate = new Date();
+                    expiryDate.setDate(expiryDate.getDate() + 7);
+                    document.cookie = `referral_code=${refCode}; expires=${expiryDate.toUTCString()}; path=/`;
+                    console.log('Referral code saved:', refCode);
+                    
+                    // הצג הודעה לסוכן (אופציונלי)
+                    showReferralMessage(refCode);
+                }
+            }
+            
+            // הצגת הודעה שהקישור עבד
+            function showReferralMessage(refCode) {
+                const message = document.createElement('div');
+                message.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #28a745;
+                    color: white;
+                    padding: 10px 15px;
+                    border-radius: 5px;
+                    z-index: 9999;
+                    font-size: 14px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                `;
+                message.innerHTML = `✅ קישור הפניה פעיל - קוד: ${refCode}`;
+                document.body.appendChild(message);
+                
+                setTimeout(() => {
+                    message.remove();
+                }, 5000);
+            }
+            
+            // קבלת קוד ההפניה מהעוגיה
+            function getSavedReferralCode() {
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'referral_code') {
+                        return value;
+                    }
+                }
+                return null;
+            }
+            
+            // מעקב אחר ביקור
+            async function trackVisit(refCode) {
+                try {
+                    await fetch(`${TRACKING_SERVER}/api/track-visit`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            referral_code: refCode,
+                            visitor_ip: null,
+                            user_agent: navigator.userAgent,
+                            page_url: window.location.href
+                        })
+                    });
+                    console.log('Visit tracked for referral code:', refCode);
+                } catch (error) {
+                    console.error('Error tracking visit:', error);
+                }
+            }
+            
+            // מעקב אחר רכישה
+            window.trackSale = async function(saleAmount, customerEmail = null, productName = 'כורסת עיסוי VC') {
+                const refCode = getSavedReferralCode();
+                if (!refCode) {
+                    console.log('No referral code found - sale not tracked');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`${TRACKING_SERVER}/api/record-sale`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            referral_code: refCode,
+                            sale_amount: saleAmount,
+                            customer_email: customerEmail,
+                            product_name: productName
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    if (response.ok) {
+                        console.log('Sale tracked successfully:', result);
+                        
+                        // הצג הודעת הצלחה
+                        const successMessage = document.createElement('div');
+                        successMessage.style.cssText = `
+                            position: fixed;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            background: #28a745;
+                            color: white;
+                            padding: 20px;
+                            border-radius: 10px;
+                            z-index: 10000;
+                            text-align: center;
+                            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                        `;
+                        successMessage.innerHTML = `
+                            <h4>🎉 רכישה נרשמה בהצלחה!</h4>
+                            <p>הסוכן יקבל עמלה של ₪${result.commission_amount}</p>
+                        `;
+                        document.body.appendChild(successMessage);
+                        
+                        setTimeout(() => {
+                            successMessage.remove();
+                        }, 4000);
+                        
+                        return result;
+                    } else {
+                        console.error('Error tracking sale:', result.error);
+                    }
+                } catch (error) {
+                    console.error('Error tracking sale:', error);
+                }
+            };
+            
+            // אתחול המעקב
+            function initTracking() {
+                const refCode = getReferralCode();
+                
+                if (refCode) {
+                    // יש קוד הפניה חדש - שמור אותו ועקוב אחר הביקור
+                    saveReferralCode(refCode);
+                    trackVisit(refCode);
+                    
+                    // הסר את הפרמטר מה-URL כדי שהוא לא יישאר
+                    const url = new URL(window.location);
+                    url.searchParams.delete('ref');
+                    window.history.replaceState({}, document.title, url.toString());
+                } else {
+                    // בדוק אם יש קוד הפניה שמור
+                    const savedRefCode = getSavedReferralCode();
+                    if (savedRefCode) {
+                        console.log('Using saved referral code:', savedRefCode);
+                    }
+                }
+            }
+            
+            // הפעל את המעקב כאשר הדף נטען
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initTracking);
+            } else {
+                initTracking();
+            }
+            
+            // הוסף מעקב לכפתור הרכישה
+            document.addEventListener('click', function(e) {
+                // זיהוי כפתור הרכישה
+                if (e.target.closest('.join-group-btn')) {
+                    console.log('Purchase button clicked!');
+                    
+                    // עקוב אחר הרכישה - סכום לדוגמה ₪2500
+                    // יש לעדכן את הסכום בהתאם למחיר האמיתי
+                    trackSale(2500, null, 'כורסת עיסוי VC');
+                    
+                    // הצג הודעה למשתמש
+                    setTimeout(() => {
+                        alert('תודה על הרכישה! אם הגעת דרך קישור של סוכן, הוא יקבל עמלה על המכירה.');
+                    }, 1000);
+                }
+            });
+            
+        })();
+    </script>
+</body>
+</html>
