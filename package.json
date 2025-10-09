@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
-    "start-simple": "node simple-server.js",
-    "dev": "node src/server.js",
+    "start": "node simple-server.js",
+    "start-full": "node src/server.js",
+    "dev": "node simple-server.js",
     "build": "echo 'Build completed'",
     "test": "echo \"Error: no test specified\" && exit 1",
     "clear": "node src/jobs/clearCommissions.js"
