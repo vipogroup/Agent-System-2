@@ -6,6 +6,23 @@ export async function registerRoutes(app) {
   // Health check endpoint
   app.get('/health', (req, res) => res.json({ ok: true }));
 
+  // Get all agents (for admin dashboard - no auth required for demo)
+  app.get('/api/agents/all', async (req, res) => {
+    try {
+      const db = await getDB();
+      const agents = await db.all('SELECT id, email, full_name, referral_code, role, is_active, created_at FROM agents ORDER BY created_at DESC');
+      
+      res.json({
+        success: true,
+        items: agents,
+        count: agents.length
+      });
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+      res.status(500).json({ error: 'Failed to fetch agents' });
+    }
+  });
+
   // Agent registration
   app.post('/api/agents/register', async (req, res) => {
     try {
