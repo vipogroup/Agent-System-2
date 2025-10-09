@@ -2,6 +2,74 @@ import { getDB } from './db.js';
 import { hashPassword, verifyPassword, signToken, authRequired, adminOnly } from './auth.js';
 import { v4 as uuidv4 } from 'uuid';
 
+// Send welcome notification (simulate email/SMS)
+async function sendWelcomeNotification(email, phone, password, referralCode, fullName) {
+  try {
+    console.log('🎉 SENDING WELCOME NOTIFICATION:');
+    console.log('================================');
+    console.log(`📧 TO: ${email}`);
+    console.log(`📱 PHONE: ${phone}`);
+    console.log(`👤 NAME: ${fullName}`);
+    console.log(`🔑 PASSWORD: ${password}`);
+    console.log(`🔗 REFERRAL CODE: ${referralCode}`);
+    console.log('================================');
+    
+    // In a real application, you would use:
+    // - SendGrid, Mailgun, or similar for email
+    // - Twilio, AWS SNS, or similar for SMS
+    
+    // Email content (simulation)
+    const emailContent = `
+🎉 ברוך הבא למערכת הסוכנים! 🎉
+
+שלום ${fullName},
+
+ההרשמה שלך הושלמה בהצלחה!
+
+פרטי הכניסה שלך:
+📧 אימייל: ${email}
+🔑 סיסמה: ${password}
+🔗 קוד הפניה: ${referralCode}
+
+קישור לכניסה למערכת:
+https://agent-system-2.onrender.com/public/dashboard-agent.html
+
+💡 טיפים חשובים:
+• שמור את הסיסמה במקום בטוח
+• השתמש בקוד ההפניה שלך לקבלת עמלות
+• בדוק את הדשבורד שלך באופן קבוע
+
+בהצלחה!
+צוות מערכת הסוכנים
+    `;
+    
+    // SMS content (simulation)
+    const smsContent = `
+🎉 ברוך הבא למערכת הסוכנים!
+שם: ${fullName}
+קוד הפניה: ${referralCode}
+כניסה: https://agent-system-2.onrender.com
+    `;
+    
+    console.log('📧 EMAIL CONTENT:');
+    console.log(emailContent);
+    console.log('📱 SMS CONTENT:');
+    console.log(smsContent);
+    
+    // Log to database (optional)
+    const db = await getDB();
+    await db.run(`
+      INSERT INTO notifications (email, phone, type, content, sent_at)
+      VALUES (?, ?, ?, ?, datetime('now'))
+    `, [email, phone, 'welcome', JSON.stringify({ emailContent, smsContent })]);
+    
+    return true;
+  } catch (error) {
+    console.error('Error sending welcome notification:', error);
+    return false;
+  }
+}
+
 export async function registerRoutes(app) {
   // Health check endpoint
   app.get('/health', (req, res) => res.json({ ok: true }));
@@ -237,7 +305,7 @@ export async function registerRoutes(app) {
   // Agent registration
   app.post('/api/agents/register', async (req, res) => {
     try {
-      const { email, password, full_name, phone } = req.body;
+      const { email, password, full_name, phone, payment_details } = req.body;
       
       if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' });
@@ -258,11 +326,18 @@ export async function registerRoutes(app) {
       // Set role to admin if this is the admin email
       const role = email === 'admin@example.com' ? 'admin' : 'agent';
       
+      // Process payment details
+      const paymentMethod = payment_details?.method || 'bank';
+      const paymentDetailsJson = payment_details ? JSON.stringify(payment_details) : null;
+
       // Insert new agent
       const result = await db.run(
-        'INSERT INTO agents (email, password_hash, full_name, phone, referral_code, role) VALUES (?, ?, ?, ?, ?, ?)',
-        [email, passwordHash, full_name || null, phone || null, referralCode, role]
+        'INSERT INTO agents (email, password_hash, full_name, phone, referral_code, role, payment_method, payment_details) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [email, passwordHash, full_name || null, phone || null, referralCode, role, paymentMethod, paymentDetailsJson]
       );
+
+      // Send welcome notification (email/SMS simulation)
+      await sendWelcomeNotification(email, phone, password, referralCode, full_name);
 
       // Generate JWT token
       const token = signToken({ id: result.lastID, email, role });

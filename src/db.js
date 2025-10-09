@@ -23,9 +23,20 @@ export async function getDB() {
       phone TEXT,
       referral_code TEXT UNIQUE,
       role TEXT DEFAULT 'agent',
+      payment_method TEXT DEFAULT 'bank',
+      payment_details TEXT,
       is_active INTEGER DEFAULT 1,
       commission_rate_override REAL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT,
+      phone TEXT,
+      type TEXT,
+      content TEXT,
+      sent_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS commissions (
@@ -35,7 +46,6 @@ export async function getDB() {
       amount_cents INTEGER,
       status TEXT DEFAULT 'PENDING_CLEARANCE',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      cleared_at DATETIME,
       FOREIGN KEY (agent_id) REFERENCES agents (id)
     );
 

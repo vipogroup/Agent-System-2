@@ -209,6 +209,61 @@
         .password-recovery a:hover {
             text-decoration: underline;
         }
+        
+        .payment-method-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .payment-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 0.8rem;
+            border: 2px solid #e1e5e9;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .payment-btn.active {
+            border-color: #4ecdc4;
+            background: rgba(78, 205, 196, 0.1);
+            color: #4ecdc4;
+        }
+        
+        .payment-btn:hover {
+            border-color: #4ecdc4;
+        }
+        
+        .payment-method {
+            display: none;
+        }
+        
+        .payment-method.active {
+            display: block;
+        }
+        
+        select {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            direction: rtl;
+            background: white;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -244,6 +299,74 @@
             <div class="form-group">
                 <label for="confirmPassword">אימות סיסמה *</label>
                 <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="הכנס שוב את הסיסמה">
+            </div>
+            
+            <h3 style="color: #333; margin: 2rem 0 1rem 0; text-align: center;">💳 פרטי תשלום לקבלת עמלות</h3>
+            
+            <div class="payment-method-selector">
+                <div class="payment-btn active" onclick="selectPaymentMethod('bank')">
+                    🏦 חשבון בנק
+                </div>
+                <div class="payment-btn" onclick="selectPaymentMethod('bit')">
+                    📱 ביט
+                </div>
+                <div class="payment-btn" onclick="selectPaymentMethod('paypal')">
+                    💰 PayPal
+                </div>
+            </div>
+            
+            <!-- Bank Details -->
+            <div id="bankMethod" class="payment-method active">
+                <div class="form-group">
+                    <label for="bankName">שם הבנק *</label>
+                    <select id="bankName" name="bankName" required>
+                        <option value="">בחר בנק</option>
+                        <option value="hapoalim">בנק הפועלים</option>
+                        <option value="leumi">בנק לאומי</option>
+                        <option value="discount">בנק דיסקונט</option>
+                        <option value="mizrahi">בנק מזרחי טפחות</option>
+                        <option value="igud">בנק איגוד</option>
+                        <option value="yahav">בנק יהב</option>
+                        <option value="other">אחר</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="accountNumber">מספר חשבון *</label>
+                    <input type="text" id="accountNumber" name="accountNumber" required placeholder="123456-78" pattern="[0-9\-]+">
+                </div>
+                
+                <div class="form-group">
+                    <label for="branchNumber">מספר סניף *</label>
+                    <input type="text" id="branchNumber" name="branchNumber" required placeholder="123" pattern="[0-9]+">
+                </div>
+                
+                <div class="form-group">
+                    <label for="accountHolder">שם בעל החשבון *</label>
+                    <input type="text" id="accountHolder" name="accountHolder" required placeholder="כפי שמופיע בבנק">
+                </div>
+            </div>
+            
+            <!-- Bit Details -->
+            <div id="bitMethod" class="payment-method">
+                <div class="form-group">
+                    <label for="bitPhone">מספר טלפון ביט *</label>
+                    <input type="tel" id="bitPhone" name="bitPhone" placeholder="050-1234567">
+                    <small>המספר הרשום באפליקציית ביט</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bitName">שם בביט *</label>
+                    <input type="text" id="bitName" name="bitName" placeholder="כפי שמופיע בביט">
+                </div>
+            </div>
+            
+            <!-- PayPal Details -->
+            <div id="paypalMethod" class="payment-method">
+                <div class="form-group">
+                    <label for="paypalEmail">כתובת PayPal *</label>
+                    <input type="email" id="paypalEmail" name="paypalEmail" placeholder="your@paypal.com">
+                </div>
             </div>
             
             <div class="loading" id="loading">
@@ -302,6 +425,51 @@
         function generateReferralCode() {
             return Math.random().toString(36).substring(2, 8).toUpperCase() + 
                    Math.random().toString(36).substring(2, 4).toUpperCase();
+        }
+
+        // Select payment method
+        function selectPaymentMethod(method) {
+            // Update buttons
+            document.querySelectorAll('.payment-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Show/hide forms
+            document.querySelectorAll('.payment-method').forEach(form => {
+                form.classList.remove('active');
+            });
+            document.getElementById(method + 'Method').classList.add('active');
+            
+            // Update required fields
+            updatePaymentRequiredFields(method);
+        }
+
+        // Update required fields based on payment method
+        function updatePaymentRequiredFields(method) {
+            // Remove all payment required attributes
+            document.querySelectorAll('#bankMethod input, #bankMethod select').forEach(input => {
+                input.removeAttribute('required');
+            });
+            document.querySelectorAll('#bitMethod input').forEach(input => {
+                input.removeAttribute('required');
+            });
+            document.querySelectorAll('#paypalMethod input').forEach(input => {
+                input.removeAttribute('required');
+            });
+            
+            // Add required to active method
+            if (method === 'bank') {
+                document.getElementById('bankName').setAttribute('required', '');
+                document.getElementById('accountNumber').setAttribute('required', '');
+                document.getElementById('branchNumber').setAttribute('required', '');
+                document.getElementById('accountHolder').setAttribute('required', '');
+            } else if (method === 'bit') {
+                document.getElementById('bitPhone').setAttribute('required', '');
+                document.getElementById('bitName').setAttribute('required', '');
+            } else if (method === 'paypal') {
+                document.getElementById('paypalEmail').setAttribute('required', '');
+            }
         }
 
         // Check if email is already registered
@@ -378,6 +546,58 @@
                 return false;
             }
 
+            // Validate payment details
+            const activePaymentMethod = document.querySelector('.payment-method.active').id;
+            
+            if (activePaymentMethod === 'bankMethod') {
+                const bankName = document.getElementById('bankName').value;
+                const accountNumber = document.getElementById('accountNumber').value.trim();
+                const branchNumber = document.getElementById('branchNumber').value.trim();
+                const accountHolder = document.getElementById('accountHolder').value.trim();
+                
+                if (!bankName || !accountNumber || !branchNumber || !accountHolder) {
+                    showAlert('נא למלא את כל פרטי החשבון הבנק', 'error');
+                    return false;
+                }
+                
+                if (!/^[0-9\-]+$/.test(accountNumber)) {
+                    showAlert('מספר חשבון חייב להכיל רק ספרות ומקפים', 'error');
+                    return false;
+                }
+                
+                if (!/^[0-9]+$/.test(branchNumber)) {
+                    showAlert('מספר סניף חייב להכיל רק ספרות', 'error');
+                    return false;
+                }
+            } else if (activePaymentMethod === 'bitMethod') {
+                const bitPhone = document.getElementById('bitPhone').value.trim();
+                const bitName = document.getElementById('bitName').value.trim();
+                
+                if (!bitPhone || !bitName) {
+                    showAlert('נא למלא את כל פרטי ביט', 'error');
+                    return false;
+                }
+                
+                const phoneRegex = /^(\+972|972|0)([23489]|5[0248]|77)[0-9]{7}$/;
+                const cleanPhone = bitPhone.replace(/[\s\-]/g, '');
+                if (!phoneRegex.test(cleanPhone)) {
+                    showAlert('נא להכניס מספר טלפון תקין לביט', 'error');
+                    return false;
+                }
+            } else if (activePaymentMethod === 'paypalMethod') {
+                const paypalEmail = document.getElementById('paypalEmail').value.trim();
+                
+                if (!paypalEmail) {
+                    showAlert('נא להכניס כתובת PayPal', 'error');
+                    return false;
+                }
+                
+                if (!paypalEmail.includes('@') || !paypalEmail.includes('.')) {
+                    showAlert('נא להכניס כתובת PayPal תקינה', 'error');
+                    return false;
+                }
+            }
+
             return true;
         }
 
@@ -399,11 +619,37 @@
             try {
                 const referralCode = generateReferralCode();
                 
+                // Collect payment details
+                const activePaymentMethod = document.querySelector('.payment-method.active').id;
+                let paymentDetails = { method: activePaymentMethod.replace('Method', '') };
+                
+                if (activePaymentMethod === 'bankMethod') {
+                    paymentDetails = {
+                        ...paymentDetails,
+                        bankName: document.getElementById('bankName').value,
+                        accountNumber: document.getElementById('accountNumber').value.trim(),
+                        branchNumber: document.getElementById('branchNumber').value.trim(),
+                        accountHolder: document.getElementById('accountHolder').value.trim()
+                    };
+                } else if (activePaymentMethod === 'bitMethod') {
+                    paymentDetails = {
+                        ...paymentDetails,
+                        bitPhone: document.getElementById('bitPhone').value.trim(),
+                        bitName: document.getElementById('bitName').value.trim()
+                    };
+                } else if (activePaymentMethod === 'paypalMethod') {
+                    paymentDetails = {
+                        ...paymentDetails,
+                        paypalEmail: document.getElementById('paypalEmail').value.trim()
+                    };
+                }
+
                 const formData = {
                     full_name: document.getElementById('fullName').value.trim(),
                     email: document.getElementById('email').value.trim(),
                     phone: document.getElementById('phone').value.trim(),
-                    password: document.getElementById('password').value
+                    password: document.getElementById('password').value,
+                    payment_details: paymentDetails
                 };
 
                 const response = await fetch(`${API_BASE}/api/agents/register`, {
