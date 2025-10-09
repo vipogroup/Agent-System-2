@@ -59,9 +59,9 @@ async function loginAdmin(){
           
           if (registerResponse.ok && registerData.agent?.role === 'admin') {
             // Registration successful and user is admin
-            localStorage.setItem('adminToken', registerData.token);
+            saveToken(registerData.token);
             alert('משתמש מנהל נוצר בהצלחה!');
-            window.location.href = '/public/dashboard-admin.html';
+            window.location.href = '/public/admin-dashboard.html';
             return;
           } else if (registerResponse.status === 400 && registerData.error === 'Email already registered') {
             // User exists but password might be wrong
@@ -84,9 +84,9 @@ async function loginAdmin(){
       throw new Error('אין לך הרשאות מנהל');
     }
     
-    localStorage.setItem('adminToken', data.token);
+    saveToken(data.token);
     // Redirect to admin dashboard
-    window.location.href = '/public/dashboard-admin.html';
+    window.location.href = '/public/admin-dashboard.html';
     
   } catch (error) {
     console.error('Login error:', error);
@@ -291,7 +291,7 @@ function createErrorBadge() {
 window.addEventListener('DOMContentLoaded', () => {
   const token = getToken();
   
-  if (window.location.pathname.includes('dashboard-admin.html')) {
+  if (window.location.pathname.includes('admin-dashboard.html')) {
     if (!token) {
       window.location.href = '/public/dashboard-admin.html';
       return;
