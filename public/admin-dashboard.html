@@ -299,16 +299,23 @@
         async function loadDashboard() {
             console.log('Loading dashboard data...');
             
+            // Show loading indicator
+            document.getElementById('activeAgents').textContent = '...';
+            document.getElementById('pendingAgents').textContent = '...';
+            
+            // Add timestamp to prevent caching
+            const timestamp = Date.now();
+            
             try {
                 // Load agents with different API endpoints
                 let agentsData = null;
                 
-                // Try multiple endpoints
+                // Try multiple endpoints with cache busting
                 const endpoints = [
-                    `${API_BASE}/api/agents/all`,
-                    `${API_BASE}/admin/agents`,
-                    `${API_BASE}/api/admin/agents`,
-                    `${API_BASE}/api/agents`
+                    `${API_BASE}/api/agents/all?t=${timestamp}`,
+                    `${API_BASE}/admin/agents?t=${timestamp}`,
+                    `${API_BASE}/api/admin/agents?t=${timestamp}`,
+                    `${API_BASE}/api/agents?t=${timestamp}`
                 ];
                 
                 for (const endpoint of endpoints) {
@@ -658,14 +665,16 @@
             window.location.href = '/public/dashboard-admin.html';
         }
 
-        // Load dashboard on page load
-        loadDashboard();
-        
-        // Auto refresh every 30 seconds
-        setInterval(() => {
-            console.log('Auto refreshing dashboard...');
+        // Load dashboard on page load and setup auto refresh
+        document.addEventListener('DOMContentLoaded', function() {
             loadDashboard();
-        }, 30000);
+            
+            // Auto refresh every 30 seconds
+            setInterval(() => {
+                console.log('Auto refreshing dashboard...');
+                loadDashboard();
+            }, 30000);
+        });
     </script>
 </body>
 </html>
