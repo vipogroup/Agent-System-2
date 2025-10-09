@@ -120,6 +120,74 @@ export async function registerRoutes(app) {
     }
   });
 
+  // Block/Unblock agent
+  app.post('/api/admin/agent/:agentId/toggle-status', async (req, res) => {
+    try {
+      const { agentId } = req.params;
+      const db = await getDB();
+      
+      // Get current status
+      const agent = await db.get('SELECT is_active FROM agents WHERE id = ?', [agentId]);
+      
+      if (!agent) {
+        return res.status(404).json({ error: 'Agent not found' });
+      }
+
+      // Toggle status
+      const newStatus = agent.is_active ? 0 : 1;
+      
+      await db.run('UPDATE agents SET is_active = ? WHERE id = ?', [newStatus, agentId]);
+
+      res.json({ 
+        success: true, 
+        message: newStatus ? 'Agent activated' : 'Agent blocked',
+        new_status: newStatus
+      });
+    } catch (error) {
+      console.error('Error toggling agent status:', error);
+      res.status(500).json({ error: 'Failed to toggle agent status' });
+    }
+  });
+
+  // Delete agent
+  app.delete('/api/admin/agent/:agentId', async (req, res) => {
+    try {
+      const { agentId } = req.params;
+      const db = await getDB();
+      
+      // Check if agent exists
+      const agent = await db.get('SELECT id, email FROM agents WHERE id = ?', [agentId]);
+      
+      if (!agent) {
+        return res.status(404).json({ error: 'Agent not found' });
+      }
+
+      // Don't allow deleting admin users
+      const adminAgent = await db.get('SELECT role FROM agents WHERE id = ?', [agentId]);
+      if (adminAgent && adminAgent.role === 'admin') {
+        return res.status(400).json({ error: 'Cannot delete admin user' });
+      }
+
+      // Delete related data first (due to foreign key constraints)
+      await db.run('DELETE FROM referral_visits WHERE agent_id = ?', [agentId]);
+      await db.run('DELETE FROM sales WHERE agent_id = ?', [agentId]);
+      await db.run('DELETE FROM commissions WHERE agent_id = ?', [agentId]);
+      await db.run('DELETE FROM payouts WHERE agent_id = ?', [agentId]);
+      
+      // Delete the agent
+      await db.run('DELETE FROM agents WHERE id = ?', [agentId]);
+
+      res.json({ 
+        success: true, 
+        message: 'Agent deleted successfully',
+        deleted_agent: agent.email
+      });
+    } catch (error) {
+      console.error('Error deleting agent:', error);
+      res.status(500).json({ error: 'Failed to delete agent' });
+    }
+  });
+
   // Agent registration
   app.post('/api/agents/register', async (req, res) => {
     try {

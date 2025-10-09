@@ -171,6 +171,20 @@
             background: #0056b3;
         }
         
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .status.blocked {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
         @media (max-width: 768px) {
             .header {
                 padding: 1rem;
@@ -236,13 +250,14 @@
                         <th>שם</th>
                         <th>אימייל</th>
                         <th>סטטוס</th>
+                        <th>תפקיד</th>
                         <th>עמלות</th>
                         <th>פעולות</th>
                     </tr>
                 </thead>
                 <tbody id="agentsTable">
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 2rem;">טוען נתונים...</td>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">טוען נתונים...</td>
                     </tr>
                 </tbody>
             </table>
@@ -429,23 +444,33 @@
             const tbody = document.getElementById('agentsTable');
             
             if (!agents || agents.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">אין סוכנים</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">אין סוכנים</td></tr>';
                 return;
             }
 
             tbody.innerHTML = agents.map(agent => {
-                const status = agent.is_active ? 'active' : 'pending';
-                const statusText = agent.is_active ? 'פעיל' : 'ממתין';
+                const status = agent.is_active ? 'active' : 'blocked';
+                const statusText = agent.is_active ? 'פעיל' : 'חסום';
+                const isAdmin = agent.role === 'admin';
                 
                 return `
                     <tr>
                         <td>${agent.full_name || 'לא צוין'}</td>
                         <td>${agent.email}</td>
                         <td><span class="status ${status}">${statusText}</span></td>
+                        <td>${agent.role === 'admin' ? 'מנהל' : 'סוכן'}</td>
                         <td>₪${agent.totalCommissions || 0}</td>
                         <td>
-                            ${!agent.is_active ? `<button class="btn btn-approve" onclick="approveAgent(${agent.id})">אשר</button>` : ''}
-                            ${agent.is_active ? `<button class="btn btn-block" onclick="blockAgent(${agent.id})">חסום</button>` : ''}
+                            ${!isAdmin ? `
+                                <button class="btn ${agent.is_active ? 'btn-block' : 'btn-approve'}" 
+                                        onclick="toggleAgentStatus(${agent.id}, ${agent.is_active})">
+                                    ${agent.is_active ? '🚫 חסום' : '✅ הפעל'}
+                                </button>
+                                <button class="btn btn-danger" onclick="deleteAgent(${agent.id}, '${agent.email}')" 
+                                        style="background: #dc3545; margin-right: 5px;">
+                                    🗑️ מחק
+                                </button>
+                            ` : '<span style="color: #666;">מנהל מערכת</span>'}
                         </td>
                     </tr>
                 `;
@@ -557,6 +582,70 @@
             } catch (error) {
                 console.error('Error approving payout:', error);
                 alert('שגיאה באישור התשלום');
+            }
+        }
+
+        // Toggle agent status (block/unblock)
+        async function toggleAgentStatus(agentId, currentStatus) {
+            const action = currentStatus ? 'חסימת' : 'הפעלת';
+            const confirmMessage = `האם אתה בטוח שברצונך ${action} הסוכן?`;
+            
+            if (!confirm(confirmMessage)) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/agent/${agentId}/toggle-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(result.message);
+                    loadDashboard(); // Refresh data
+                } else {
+                    const error = await response.json();
+                    alert('שגיאה: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error toggling agent status:', error);
+                alert('שגיאה בעדכון סטטוס הסוכן');
+            }
+        }
+
+        // Delete agent
+        async function deleteAgent(agentId, agentEmail) {
+            const confirmMessage = `האם אתה בטוח שברצונך למחוק את הסוכן "${agentEmail}"?\n\nפעולה זו תמחק גם את כל הנתונים הקשורים אליו (ביקורים, מכירות, עמלות) ולא ניתן לבטל אותה!`;
+            
+            if (!confirm(confirmMessage)) return;
+
+            // Double confirmation for safety
+            const doubleConfirm = prompt('כדי לאשר את המחיקה, הקלד "מחק" (באותיות עבריות):');
+            if (doubleConfirm !== 'מחק') {
+                alert('המחיקה בוטלה');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/agent/${agentId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`הסוכן "${result.deleted_agent}" נמחק בהצלחה`);
+                    loadDashboard(); // Refresh data
+                } else {
+                    const error = await response.json();
+                    alert('שגיאה: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error deleting agent:', error);
+                alert('שגיאה במחיקת הסוכן');
             }
         }
 
