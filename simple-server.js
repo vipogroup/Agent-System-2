@@ -159,6 +159,94 @@ app.post('/api/check-email', (req, res) => {
   });
 });
 
+// Debug endpoint - check database status
+app.get('/api/debug/database', async (req, res) => {
+  try {
+    // Try to import and use the database
+    const { getDB } = await import('./src/db.js');
+    const db = await getDB();
+    
+    // Get database info
+    const tables = await db.all("SELECT name FROM sqlite_master WHERE type='table'");
+    const agentsCount = await db.get("SELECT COUNT(*) as count FROM agents");
+    const agents = await db.all("SELECT id, email, full_name, referral_code, created_at FROM agents ORDER BY created_at DESC LIMIT 10");
+    
+    res.json({
+      success: true,
+      database_status: 'connected',
+      tables: tables.map(t => t.name),
+      agents_count: agentsCount.count,
+      recent_agents: agents,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    res.json({
+      success: false,
+      database_status: 'error',
+      error: error.message,
+      error_code: error.code,
+      error_errno: error.errno,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Debug endpoint - test agent registration with real database
+app.post('/api/debug/register-agent', async (req, res) => {
+  try {
+    const { email, password, full_name, phone } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+    
+    // Try to use real database
+    const { getDB } = await import('./src/db.js');
+    const { hashPassword } = await import('./src/auth.js');
+    const { v4: uuidv4 } = await import('uuid');
+    
+    const db = await getDB();
+    
+    // Check if email exists
+    const existing = await db.get('SELECT id FROM agents WHERE email = ?', [email]);
+    if (existing) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+    
+    // Hash password and create referral code
+    const passwordHash = await hashPassword(password);
+    const referralCode = uuidv4().substring(0, 8).toUpperCase();
+    
+    // Insert new agent
+    const result = await db.run(
+      'INSERT INTO agents (email, password_hash, full_name, phone, referral_code, role) VALUES (?, ?, ?, ?, ?, ?)',
+      [email, passwordHash, full_name || null, phone || null, referralCode, 'agent']
+    );
+    
+    res.json({
+      success: true,
+      message: 'Agent registered successfully in database',
+      agent: {
+        id: result.lastID,
+        email,
+        full_name: full_name || null,
+        referral_code: referralCode,
+        role: 'agent'
+      }
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      error_code: error.code,
+      error_errno: error.errno,
+      stack: error.stack
+    });
+  }
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
