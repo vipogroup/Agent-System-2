@@ -56,26 +56,23 @@ const startServer = async () => {
     const db = await getDB(); // This will create tables if they don't exist
     console.log('Database initialized');
 
-    // Force create admin user
+    // Check if any admin exists, if not, log instructions
     try {
-      // Delete existing admin if exists
-      await db.run('DELETE FROM agents WHERE email = ?', ['admin@example.com']);
-      
-      // Create new admin
-      const hashedPassword = await bcrypt.default.hash('admin123', 10);
-      const referralCode = 'ADMIN' + Date.now().toString().slice(-6);
-      
-      const result = await db.run(
-        'INSERT INTO agents (full_name, email, password_hash, role, is_active, referral_code) VALUES (?, ?, ?, ?, ?, ?)',
-        ['Admin User', 'admin@example.com', hashedPassword, 'admin', 1, referralCode]
+      const adminExists = await db.get(
+        'SELECT id FROM agents WHERE role = ?', 
+        ['admin']
       );
       
-      console.log('✅ Admin user created/updated successfully!');
-      console.log('📧 Email: admin@example.com');
-      console.log('🔑 Password: admin123');
-      console.log('🆔 ID:', result.lastID);
-    } catch (adminError) {
-      console.error('❌ Error creating admin:', adminError);
+      if (!adminExists) {
+        console.log('⚠️  No admin user found. Please create an admin user:');
+        console.log('1. Register a new user through the registration form');
+        console.log('2. Update the user role to admin in the database:');
+        console.log('   UPDATE agents SET role = \'admin\' WHERE email = \'your-email@example.com\';');
+      } else {
+        console.log('✅ Admin user exists');
+      }
+    } catch (error) {
+      console.error('❌ Error checking admin user:', error);
     }
     
     // Register routes

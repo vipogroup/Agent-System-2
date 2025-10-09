@@ -3,7 +3,17 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
+// Require JWT_SECRET to be set in production
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required in production');
+}
+
+// In development, use a default but log a warning
+const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_only_for_development';
+
+if (process.env.NODE_ENV !== 'production' && !process.env.JWT_SECRET) {
+  console.warn('⚠️  WARNING: Using default JWT secret. Set JWT_SECRET in production!');
+}
 
 export async function hashPassword(pw) {
   const salt = await bcrypt.genSalt(10);
