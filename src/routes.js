@@ -6,6 +6,30 @@ export async function registerRoutes(app) {
   // Health check endpoint
   app.get('/health', (req, res) => res.json({ ok: true }));
 
+  // Debug endpoint to check database
+  app.get('/api/debug/agents', async (req, res) => {
+    try {
+      const db = await getDB();
+      const agents = await db.all('SELECT * FROM agents ORDER BY created_at DESC');
+      const tables = await db.all("SELECT name FROM sqlite_master WHERE type='table'");
+      
+      res.json({
+        success: true,
+        tables: tables,
+        agents: agents,
+        count: agents.length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Debug error:', error);
+      res.status(500).json({ 
+        error: 'Debug failed', 
+        message: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   // Get all agents (for admin dashboard - no auth required for demo)
   app.get('/api/agents/all', async (req, res) => {
     try {
