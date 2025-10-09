@@ -313,7 +313,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>👤 דשבורד סוכן</h1>
+        <h1 id="headerTitle">🤝 דשבורד סוכן</h1>
         <button class="logout-btn" onclick="logout()">יציאה</button>
     </div>
 
@@ -399,12 +399,36 @@
         // Get agent data from localStorage (set during login)
         const agentData = JSON.parse(localStorage.getItem('agentData') || '{}');
         const agentId = agentData.id || 1; // Default for demo
+        
+        // Update header with agent's name
+        function updateHeaderWithAgentName(name = null) {
+            const headerTitle = document.getElementById('headerTitle');
+            // Use provided name or get from localStorage
+            const agentName = name || agentData.full_name || agentData.name || 'סוכן';
+            
+            if (agentName && agentName !== 'סוכן') {
+                // Extract first name only
+                const firstName = agentName.split(' ')[0];
+                headerTitle.textContent = `🤝 שלום ${firstName}`;
+                
+                // Save to localStorage for future use
+                if (name) {
+                    const updatedAgentData = { ...agentData, full_name: name };
+                    localStorage.setItem('agentData', JSON.stringify(updatedAgentData));
+                }
+            } else {
+                headerTitle.textContent = '🤝 דשבורד סוכן';
+            }
+        }
 
         // API Base URL
         const API_BASE = window.location.origin;
 
         // Load agent dashboard
         async function loadDashboard() {
+            // Update header with agent's name first
+            updateHeaderWithAgentName();
+            
             try {
                 // Load referral link
                 const linkResponse = await fetch(`${API_BASE}/api/agent/referral-link/${agentId}`);
@@ -596,8 +620,27 @@
             window.location.href = '/public/dashboard-agent.html';
         }
 
-        // Load dashboard on page load
-        loadDashboard();
+        // Load dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // For demo purposes - if no agent data exists, create sample data
+            if (!agentData.full_name && !agentData.name) {
+                const sampleAgentData = {
+                    id: 1,
+                    full_name: 'דניאל כהן',
+                    email: 'daniel@example.com',
+                    referral_code: 'DANIEL123'
+                };
+                localStorage.setItem('agentData', JSON.stringify(sampleAgentData));
+                // Reload agentData
+                window.location.reload();
+                return;
+            }
+            
+            // Update header immediately when page loads
+            updateHeaderWithAgentName();
+            // Then load the rest of the dashboard
+            loadDashboard();
+        });
     </script>
 </body>
 </html>
