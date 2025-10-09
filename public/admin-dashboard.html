@@ -269,7 +269,7 @@
 
     <script>
         // Check if admin is logged in
-        const token = localStorage.getItem('adminToken');
+        const token = localStorage.getItem('token_admin');
         if (!token) {
             window.location.href = '/public/dashboard-admin.html';
         }
@@ -441,7 +441,10 @@
 
         // Logout
         function logout() {
-            localStorage.removeItem('adminToken');
+            localStorage.removeItem('token_admin');
+            localStorage.removeItem('saved_admin_email');
+            localStorage.removeItem('saved_admin_password');
+            localStorage.removeItem('remember_admin');
             window.location.href = '/public/dashboard-admin.html';
         }
 
