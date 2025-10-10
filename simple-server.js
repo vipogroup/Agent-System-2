@@ -214,6 +214,54 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Simple API endpoints for demo
+app.post('/api/agents/register', (req, res) => {
+  const { full_name, email, password, phone } = req.body;
+  
+  console.log('Registration request:', { full_name, email, phone, password: '***' });
+  
+  if (!full_name || !email || !password) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  
+  // Check if email already exists
+  const existingAgent = agents.find(agent => agent.email === email);
+  if (existingAgent) {
+    return res.status(400).json({ error: 'Email already registered' });
+  }
+  
+  // Generate referral code
+  const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase() + 
+                      Math.random().toString(36).substring(2, 4).toUpperCase();
+  
+  // Create new agent
+  const newAgent = {
+    id: Date.now(),
+    full_name,
+    email,
+    phone: phone || '',
+    referral_code: referralCode,
+    role: 'agent',
+    is_active: true,
+    totalCommissions: 0,
+    visits: 0,
+    sales: 0,
+    created_at: new Date().toISOString()
+  };
+  
+  // Add to agents array
+  agents.push(newAgent);
+  saveAgents(agents); // Save to file
+  
+  console.log(`New agent registered: ${full_name} (${email}). Total agents: ${agents.length}`);
+  
+  res.json({
+    success: true,
+    agent: newAgent,
+    token: 'mock_token_' + Date.now()
+  });
+});
+
 // Check email availability
 app.post('/api/check-email', (req, res) => {
   const { email } = req.body;
@@ -463,8 +511,6 @@ app.post('/api/agents/login', (req, res) => {
   }
   
   console.log(`Agent login successful: ${agent.full_name} (${agent.email})`);
-  console.log(`Agent referral code: ${agent.referral_code}`);
-  console.log(`Agent ID: ${agent.id}`);
   
   // Generate JWT token (simplified for demo)
   const token = 'JWT_' + Math.random().toString(36).substring(2, 15);
@@ -529,7 +575,6 @@ app.post('/api/agents/register', (req, res) => {
   saveAgents(agents); // Save to file
   
   console.log(`New agent registered: ${full_name} (${email}) with code ${referralCode}`);
-  console.log(`Agent ID: ${newAgent.id}, Full agent data:`, newAgent);
   
   res.json({
     success: true,
@@ -788,27 +833,6 @@ app.get('/admin', (req, res) => {
 
 // Serve static files for public directory
 app.use('/public', express.static(path.join(__dirname, 'public')));
-
-// Debug endpoint to check all agents
-app.get('/api/debug/agents', (req, res) => {
-  console.log('Debug: All agents in system:');
-  agents.forEach((agent, index) => {
-    console.log(`${index + 1}. ${agent.full_name} (${agent.email}) - Code: ${agent.referral_code} - ID: ${agent.id}`);
-  });
-  
-  res.json({
-    success: true,
-    count: agents.length,
-    agents: agents.map(a => ({
-      id: a.id,
-      full_name: a.full_name,
-      email: a.email,
-      referral_code: a.referral_code,
-      is_active: a.is_active,
-      created_at: a.created_at
-    }))
-  });
-});
 
 // Data backup and restore endpoints (for deployment persistence)
 app.get('/api/admin/backup', (req, res) => {
