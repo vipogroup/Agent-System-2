@@ -27,43 +27,176 @@ import {
   checkPostgresHealth
 } from './postgres.js';
 
-// 🛡️ Import Security Middlewares
-import {
-  corsOptions,
-  generalLimiter,
-  loginLimiter,
-  helmetConfig,
-  securityLogger,
-  additionalSecurityHeaders
-} from './middlewares/security.js';
+// 🛡️ Security Middlewares - Inline Implementation
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
 
-import {
-  createToken,
-  setTokenCookie,
-  clearTokenCookie,
-  authenticate,
-  authorize,
-  refreshToken
-} from './middlewares/auth.js';
+// JWT Secret
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key-change-in-production';
 
-import {
-  logUserAction,
-  logSecurityEvent,
-  getAuditLogs,
-  getSecurityLogs,
-  getLogStats
-} from './services/auditLogger.js';
+// 🛡️ CORS Configuration
+const corsOptions = {
+  origin: function(origin, callback) {
+    const allowedOrigins = [
+      'https://agent-system-2.onrender.com',
+      'http://localhost:3000',
+      'http://localhost:8080',
+      'http://127.0.0.1:3000'
+    ];
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log(`🚫 CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS policy'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
+// 🚦 Rate Limiting
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'יותר מדי בקשות מכתובת IP זו, נסה שוב בעוד 15 דקות' }
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  skipSuccessfulRequests: true,
+  message: { error: 'יותר מדי ניסיונות כניסה שגויים, נסה שוב בעוד 15 דקות' }
+});
+
+// 🔑 JWT Functions
+const createToken = (user) => {
+  return jwt.sign({
+    id: user.id,
+    email: user.email,
+    role: user.role || 'agent'
+  }, JWT_SECRET, {
+    expiresIn: '24h',
+    issuer: 'agent-system'
+  });
+};
+
+const setTokenCookie = (res, token) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  res.cookie('authToken', token, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'strict',
+    maxAge: 24 * 60 * 60 * 1000,
+    path: '/'
+  });
+};
+
+const clearTokenCookie = (res) => {
+  res.clearCookie('authToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/'
+  });
+};
+
+// 🔒 Authentication Middleware
+const authenticate = (req, res, next) => {
+  try {
+    let token = req.cookies?.authToken;
+    
+    if (!token && req.headers.authorization) {
+      const authHeader = req.headers.authorization;
+      if (authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
+    }
+    
+    if (!token) {
+      return res.status(401).json({ 
+        error: 'לא מאושר - נדרש להתחבר מחדש',
+        code: 'NO_TOKEN'
+      });
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role
+    };
+    
+    next();
+    
+  } catch (error) {
+    clearTokenCookie(res);
+    return res.status(401).json({ 
+      error: 'טוקן לא חוקי - נדרש להתחבר מחדש',
+      code: 'INVALID_TOKEN'
+    });
+  }
+};
+
+// 📝 Simple Logging
+const logUserAction = async (userId, action, status, req, metadata = {}) => {
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    userId: userId || 'anonymous',
+    action,
+    status,
+    ip: req?.ip || 'unknown',
+    userAgent: req?.headers?.['user-agent'] || 'unknown'
+  };
+  console.log(`📝 ${status === 'SUCCESS' ? '✅' : '❌'} ${action}: User ${userId || 'anonymous'} from ${logEntry.ip}`);
+};
+
+const logSecurityEvent = async (eventType, severity, req, details = {}) => {
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    eventType,
+    severity,
+    ip: req?.ip || 'unknown',
+    details
+  };
+  console.log(`🚨 SECURITY ${severity}: ${eventType} from ${logEntry.ip}`);
+};
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // 🛡️ Security Middlewares (ORDER MATTERS!)
-app.use(helmet(helmetConfig));           // Security headers
-app.use(additionalSecurityHeaders);      // Additional security headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:"]
+    }
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
+}));
+
+// Additional security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.removeHeader('X-Powered-By');
+  next();
+});
+
 app.use(cors(corsOptions));              // CORS protection
 app.use(generalLimiter);                 // Rate limiting
-app.use(securityLogger);                 // Security logging
 app.use(cookieParser());                 // Cookie parsing
 app.use(express.json({ limit: '10mb' })); // JSON parsing with size limit
 app.use(express.urlencoded({ extended: true, limit: '10mb' })); // URL encoding
@@ -366,13 +499,15 @@ app.get('/health', async (req, res) => {
   
   res.json({ 
     ok: true, 
-    message: 'Agent System is running - SECURED',
+    message: 'Agent System is running - SECURED ✅',
     timestamp: new Date().toISOString(),
     security: {
-      cors: 'ENABLED',
-      rateLimit: 'ENABLED',
-      helmet: 'ENABLED',
-      auditLogging: 'ENABLED'
+      cors: 'ENABLED ✅',
+      rateLimit: 'ENABLED ✅',
+      helmet: 'ENABLED ✅',
+      auditLogging: 'ENABLED ✅',
+      jwtTokens: 'SECURED ✅',
+      httpOnlyCookies: 'ENABLED ✅'
     },
     database: {
       primary: {
