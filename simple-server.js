@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
+import fs from 'fs';
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -12,8 +13,62 @@ const __dirname = path.dirname(__filename);
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
-// In-memory storage for demo purposes
-let agents = [
+// Persistent storage functions
+const DATA_DIR = path.join(__dirname, 'data');
+const AGENTS_FILE = path.join(DATA_DIR, 'agents.json');
+const SALES_FILE = path.join(DATA_DIR, 'sales.json');
+
+// Ensure data directory exists
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+// Load data from files
+function loadAgents() {
+  try {
+    if (fs.existsSync(AGENTS_FILE)) {
+      const data = fs.readFileSync(AGENTS_FILE, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error loading agents:', error);
+  }
+  return getDefaultAgents();
+}
+
+function saveAgents(agents) {
+  try {
+    fs.writeFileSync(AGENTS_FILE, JSON.stringify(agents, null, 2));
+    console.log('Agents saved to file');
+  } catch (error) {
+    console.error('Error saving agents:', error);
+  }
+}
+
+function loadSales() {
+  try {
+    if (fs.existsSync(SALES_FILE)) {
+      const data = fs.readFileSync(SALES_FILE, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error loading sales:', error);
+  }
+  return [];
+}
+
+function saveSales(sales) {
+  try {
+    fs.writeFileSync(SALES_FILE, JSON.stringify(sales, null, 2));
+    console.log('Sales saved to file');
+  } catch (error) {
+    console.error('Error saving sales:', error);
+  }
+}
+
+// Default agents for first time setup
+function getDefaultAgents() {
+  return [
   {
     id: 1,
     full_name: 'יוסי כהן',
@@ -53,10 +108,14 @@ let agents = [
     role: 'agent',
     totalCommissions: 0,
   }
-];
+  ];
+}
 
-// Sales storage
-let sales = [];
+// Initialize data from files
+let agents = loadAgents();
+let sales = loadSales();
+
+console.log(`📊 Data loaded: ${agents.length} agents, ${sales.length} sales`);
 
 let payoutRequests = [
   {
@@ -149,6 +208,7 @@ app.post('/api/agents/register', (req, res) => {
   
   // Add to agents array
   agents.push(newAgent);
+  saveAgents(agents); // Save to file
   
   console.log(`New agent registered: ${full_name} (${email}). Total agents: ${agents.length}`);
   
@@ -314,10 +374,12 @@ app.post('/api/agent/:id/sales', (req, res) => {
   
   // Add to sales array
   sales.push(sale);
+  saveSales(sales); // Save to file
   
   // Update agent stats
   agent.sales = (agent.sales || 0) + 1;
   agent.totalCommissions = (agent.totalCommissions || 0) + commission;
+  saveAgents(agents); // Save updated agent stats
   
   console.log(`New sale recorded: Agent ${agent.full_name}, Amount: ₪${amount}, Commission: ₪${commission}`);
   
@@ -351,6 +413,7 @@ app.post('/api/agent/:id/reset-password', (req, res) => {
   // Update agent password
   agent.password = hashedPassword;
   agent.password_reset_at = new Date().toISOString();
+  saveAgents(agents); // Save to file
   
   console.log(`Password reset for agent ${agent.full_name} (${agent.email}): ${tempPassword}`);
   
@@ -475,6 +538,7 @@ app.post('/api/agents/register', (req, res) => {
   
   // Add to agents array
   agents.push(newAgent);
+  saveAgents(agents); // Save to file
   
   console.log(`New agent registered: ${full_name} (${email}) with code ${referralCode}`);
   
@@ -748,6 +812,13 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📱 Main site: http://localhost:${PORT}`);
   console.log(`🛒 Sales site: http://localhost:${PORT}/vc/`);
   console.log(`⚡ Health check: http://localhost:${PORT}/health`);
+  
+  // Auto-save every 5 minutes as backup
+  setInterval(() => {
+    saveAgents(agents);
+    saveSales(sales);
+    console.log('💾 Auto-backup completed');
+  }, 5 * 60 * 1000); // 5 minutes
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`💾 In-memory storage initialized with ${agents.length} agents`);
 });
