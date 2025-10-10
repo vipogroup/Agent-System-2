@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
-// Persistent storage functions
+// Persistent storage using environment variables as backup
 const DATA_DIR = path.join(__dirname, 'data');
 const AGENTS_FILE = path.join(DATA_DIR, 'agents.json');
 const SALES_FILE = path.join(DATA_DIR, 'sales.json');
@@ -23,23 +23,43 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// Load data from files
+// Environment variables for persistent storage
+const ENV_AGENTS_KEY = 'AGENTS_DATA';
+const ENV_SALES_KEY = 'SALES_DATA';
+
+// Load data from files or environment variables
 function loadAgents() {
   try {
+    // First try to load from environment variable (persistent across deployments)
+    if (process.env[ENV_AGENTS_KEY]) {
+      console.log('Loading agents from environment variable');
+      return JSON.parse(process.env[ENV_AGENTS_KEY]);
+    }
+    
+    // Fallback to file system
     if (fs.existsSync(AGENTS_FILE)) {
+      console.log('Loading agents from file system');
       const data = fs.readFileSync(AGENTS_FILE, 'utf8');
       return JSON.parse(data);
     }
   } catch (error) {
     console.error('Error loading agents:', error);
   }
+  
+  console.log('Loading default agents');
   return getDefaultAgents();
 }
 
 function saveAgents(agents) {
   try {
+    // Save to file system
     fs.writeFileSync(AGENTS_FILE, JSON.stringify(agents, null, 2));
     console.log('Agents saved to file');
+    
+    // Also save to environment variable for persistence across deployments
+    // Note: This won't work in Render without manual env var setting
+    console.log('Agents data ready for environment variable backup');
+    console.log('AGENTS_DATA should be set to:', JSON.stringify(agents));
   } catch (error) {
     console.error('Error saving agents:', error);
   }
@@ -47,20 +67,35 @@ function saveAgents(agents) {
 
 function loadSales() {
   try {
+    // First try to load from environment variable
+    if (process.env[ENV_SALES_KEY]) {
+      console.log('Loading sales from environment variable');
+      return JSON.parse(process.env[ENV_SALES_KEY]);
+    }
+    
+    // Fallback to file system
     if (fs.existsSync(SALES_FILE)) {
+      console.log('Loading sales from file system');
       const data = fs.readFileSync(SALES_FILE, 'utf8');
       return JSON.parse(data);
     }
   } catch (error) {
     console.error('Error loading sales:', error);
   }
+  
+  console.log('Loading empty sales array');
   return [];
 }
 
 function saveSales(sales) {
   try {
+    // Save to file system
     fs.writeFileSync(SALES_FILE, JSON.stringify(sales, null, 2));
     console.log('Sales saved to file');
+    
+    // Also prepare for environment variable backup
+    console.log('Sales data ready for environment variable backup');
+    console.log('SALES_DATA should be set to:', JSON.stringify(sales));
   } catch (error) {
     console.error('Error saving sales:', error);
   }
@@ -795,6 +830,60 @@ app.post('/api/admin/payouts/:id/approve', (req, res) => {
 // Serve admin dashboard at the root path for easy access
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
+});
+
+// Data backup endpoint for manual backup
+app.get('/api/backup/data', (req, res) => {
+  console.log('📦 Creating data backup...');
+  
+  const backup = {
+    agents: agents,
+    sales: sales,
+    timestamp: new Date().toISOString(),
+    version: '1.0'
+  };
+  
+  res.json({
+    success: true,
+    backup: backup,
+    instructions: {
+      agents_env_var: 'AGENTS_DATA',
+      sales_env_var: 'SALES_DATA',
+      agents_data: JSON.stringify(agents),
+      sales_data: JSON.stringify(sales)
+    }
+  });
+});
+
+// Data restore endpoint
+app.post('/api/backup/restore', (req, res) => {
+  try {
+    const { agents: backupAgents, sales: backupSales } = req.body;
+    
+    if (backupAgents) {
+      agents.length = 0; // Clear current agents
+      agents.push(...backupAgents);
+      saveAgents(agents);
+      console.log(`📥 Restored ${agents.length} agents from backup`);
+    }
+    
+    if (backupSales) {
+      sales.length = 0; // Clear current sales
+      sales.push(...backupSales);
+      saveSales(sales);
+      console.log(`📥 Restored ${sales.length} sales from backup`);
+    }
+    
+    res.json({
+      success: true,
+      message: 'Data restored successfully',
+      agents_count: agents.length,
+      sales_count: sales.length
+    });
+  } catch (error) {
+    console.error('Error restoring backup:', error);
+    res.status(500).json({ error: 'Failed to restore backup' });
+  }
 });
 
 // Serve static files for public directory
