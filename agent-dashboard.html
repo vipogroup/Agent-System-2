@@ -222,6 +222,32 @@
             background: #e0a800;
         }
         
+        /* Social media button colors */
+        .btn-warning[onclick*="Instagram"] {
+            background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+            color: white;
+        }
+        
+        .btn-warning[onclick*="TikTok"] {
+            background: #000000;
+            color: white;
+        }
+        
+        .btn-warning[onclick*="Telegram"] {
+            background: #0088cc;
+            color: white;
+        }
+        
+        .btn-warning[onclick*="WhatsApp"] {
+            background: #25d366;
+            color: white;
+        }
+        
+        .btn-warning[onclick*="Facebook"] {
+            background: #1877f2;
+            color: white;
+        }
+        
         .table {
             width: 100%;
             border-collapse: collapse;
@@ -336,9 +362,12 @@
                 </div>
                 
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn btn-warning" onclick="shareToWhatsApp()">📱 שתף בוואטסאפ</button>
-                    <button class="btn btn-warning" onclick="shareToFacebook()">📘 שתף בפייסבוק</button>
-                    <button class="btn btn-warning" onclick="shareToEmail()">📧 שתף במייל</button>
+                    <button class="btn btn-warning" onclick="shareToWhatsApp()">📱 וואטסאפ</button>
+                    <button class="btn btn-warning" onclick="shareToFacebook()">📘 פייסבוק</button>
+                    <button class="btn btn-warning" onclick="shareToInstagram()">📸 אינסטגרם</button>
+                    <button class="btn btn-warning" onclick="shareToTikTok()">🎵 טיקטוק</button>
+                    <button class="btn btn-warning" onclick="shareToTelegram()">✈️ טלגרם</button>
+                    <button class="btn btn-warning" onclick="shareToEmail()">📧 מייל</button>
                 </div>
             </div>
         </div>
@@ -518,6 +547,50 @@
             const body = `היי!\n\nרציתי לשתף איתך משהו מיוחד - כורסת עיסוי ביתית מקצועית במחיר מעולה!\n\n🔗 לחץ כאן לרכישה: ${link}\n\n💰 מחיר מיוחד: 2,500₪ בלבד!\n\nבהצלחה!`;
             const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             window.location.href = mailtoUrl;
+        }
+
+        // Share to Instagram
+        function shareToInstagram() {
+            const link = document.getElementById('referralLink').value;
+            // Instagram doesn't have direct URL sharing, so we copy to clipboard and show instructions
+            navigator.clipboard.writeText(link).then(() => {
+                alert(`📸 הקישור הועתק ללוח! \n\n📋 עכשיו:\n1. פתח את אינסטגרם\n2. צור פוסט או סטורי חדש\n3. הדבק את הקישור בתיאור\n4. הוסף טקסט מושך: "כורסת עיסוי מקצועית במחיר מיוחד! 💆‍♀️✨"`);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = link;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert(`📸 הקישור הועתק ללוח! \n\n📋 עכשיו:\n1. פתח את אינסטגרם\n2. צור פוסט או סטורי חדש\n3. הדבק את הקישור בתיאור\n4. הוסף טקסט מושך: "כורסת עיסוי מקצועית במחיר מיוחד! 💆‍♀️✨"`);
+            });
+        }
+
+        // Share to TikTok
+        function shareToTikTok() {
+            const link = document.getElementById('referralLink').value;
+            // TikTok doesn't have direct URL sharing, so we copy to clipboard and show instructions
+            navigator.clipboard.writeText(link).then(() => {
+                alert(`🎵 הקישור הועתק ללוח! \n\n📋 עכשיו:\n1. פתח את טיקטוק\n2. צור סרטון חדש\n3. הוסף את הקישור בתיאור\n4. צור תוכן מעניין על כורסת העיסוי\n5. השתמש בהאשטגים: #עיסוי #כורסה #מבצע`);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = link;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert(`🎵 הקישור הועתק ללוח! \n\n📋 עכשיו:\n1. פתח את טיקטוק\n2. צור סרטון חדש\n3. הוסף את הקישור בתיאור\n4. צור תוכן מעניין על כורסת העיסוי\n5. השתמש בהאשטגים: #עיסוי #כורסה #מבצע`);
+            });
+        }
+
+        // Share to Telegram
+        function shareToTelegram() {
+            const link = document.getElementById('referralLink').value;
+            const message = `🪑 כורסת עיסוי ביתית מקצועית במחיר מיוחד! 💆‍♀️\n\n✨ חוויית עיסוי מפנקת בבית שלכם\n💰 מחיר מיוחד: 2,500₪ בלבד!\n🚚 משלוח חינם עד הבית\n\n🔗 לחץ כאן לרכישה:\n${link}\n\n#עיסוי #כורסה #מבצע #בריאות`;
+            const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(message)}`;
+            window.open(telegramUrl, '_blank');
         }
 
         // Simulate sale (for demo)
