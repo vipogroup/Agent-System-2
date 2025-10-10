@@ -25,10 +25,34 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+            gap: 1rem;
         }
         
         .header h1 {
             font-size: 1.5rem;
+            min-width: 0;
+            flex: 1;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+                text-align: center;
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 1.2rem;
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+            
+            .header .btn {
+                width: 100%;
+                margin: 0.25rem 0;
+            }
         }
         
         .btn {
@@ -105,6 +129,71 @@
             padding: 1rem;
             text-align: right;
             border-bottom: 1px solid #dee2e6;
+        }
+        
+        /* Mobile table optimizations */
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem auto;
+                padding: 0 0.5rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+            }
+            
+            .stat-card {
+                padding: 0.75rem;
+            }
+            
+            .stat-number {
+                font-size: 1.2rem;
+            }
+            
+            .section {
+                margin-bottom: 1rem;
+                overflow-x: auto;
+            }
+            
+            .section-header {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .table {
+                min-width: 600px;
+                font-size: 0.8rem;
+            }
+            
+            .table th,
+            .table td {
+                padding: 0.5rem 0.25rem;
+                white-space: nowrap;
+            }
+            
+            .btn-sm {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.7rem;
+                margin: 0.1rem;
+                display: inline-block;
+                min-width: 60px;
+            }
+            
+            /* Stack buttons vertically on very small screens */
+            @media (max-width: 480px) {
+                .table th,
+                .table td {
+                    padding: 0.4rem 0.2rem;
+                }
+                
+                .btn-sm {
+                    display: block;
+                    width: 100%;
+                    margin: 0.1rem 0;
+                    font-size: 0.75rem;
+                }
+            }
         }
         
         .table th {
