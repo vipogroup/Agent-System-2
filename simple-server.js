@@ -17,32 +17,41 @@ let agents = [
     id: 1,
     full_name: 'יוסי כהן',
     email: 'yossi@example.com',
+    referral_code: 'YOSSI2024',
     is_active: true,
     role: 'agent',
     totalCommissions: 0,
+    visits: 0,
+    sales: 0,
     created_at: new Date().toISOString()
   },
   {
     id: 2,
     full_name: 'שרה לוי',
     email: 'sara@example.com',
+    referral_code: 'SARA2024',
     is_active: true,
     role: 'agent',
     totalCommissions: 0,
+    visits: 0,
+    sales: 0,
     created_at: new Date().toISOString()
   },
   {
     id: 3,
     full_name: 'דוד אברהם',
     email: 'david@example.com',
+    referral_code: 'DAVID2024',
     is_active: false,
     role: 'agent',
     totalCommissions: 0,
-    created_at: new Date().toISOString()
   }
 ];
 
-let payouts = [
+// Sales storage
+let sales = [];
+
+let payoutRequests = [
   {
     id: 1,
     agentName: 'יוסי כהן',
@@ -62,10 +71,29 @@ let payouts = [
 // Serve static files
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/vc', express.static(path.join(__dirname, 'vc')));
+app.use(express.static(path.join(__dirname))); // Serve files from root directory
 
 // Root route
 app.get('/', (req, res) => {
   res.redirect('/public/index.html');
+});
+
+// GitHub system route
+app.get('/github-system.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'github-system.html'));
+});
+
+// Login pages
+app.get('/admin-login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin-login.html'));
+});
+
+app.get('/agent-login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'agent-login.html'));
+});
+
+app.get('/agent-dashboard.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'agent-dashboard.html'));
 });
 
 // Health check
@@ -79,7 +107,9 @@ app.get('/health', (req, res) => {
 
 // Simple API endpoints for demo
 app.post('/api/agents/register', (req, res) => {
-  const { full_name, email, password } = req.body;
+  const { full_name, email, password, phone } = req.body;
+  
+  console.log('Registration request:', { full_name, email, phone, password: '***' });
   
   if (!full_name || !email || !password) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -100,10 +130,13 @@ app.post('/api/agents/register', (req, res) => {
     id: Date.now(),
     full_name,
     email,
+    phone: phone || '',
     referral_code: referralCode,
     role: 'agent',
     is_active: true,
     totalCommissions: 0,
+    visits: 0,
+    sales: 0,
     created_at: new Date().toISOString()
   };
   
@@ -119,6 +152,22 @@ app.post('/api/agents/register', (req, res) => {
   });
 });
 
+// Check email availability
+app.post('/api/check-email', (req, res) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+  
+  const existingAgent = agents.find(agent => agent.email === email);
+  
+  res.json({
+    available: !existingAgent,
+    message: existingAgent ? 'Email already registered' : 'Email is available'
+  });
+});
+
 app.get('/api/agent/referral-link/:agentId', (req, res) => {
   const { agentId } = req.params;
   const referralCode = 'DEMO' + agentId.slice(-4);
@@ -130,17 +179,82 @@ app.get('/api/agent/referral-link/:agentId', (req, res) => {
   });
 });
 
+// Track visits with referral codes
 app.post('/api/track-visit', (req, res) => {
-  console.log('Visit tracked:', req.body);
-  res.json({ success: true, message: 'Visit tracked successfully' });
+  const { referral_code, visitor_ip, user_agent, page_url } = req.body;
+  
+  console.log('Visit tracked:', { referral_code, visitor_ip, user_agent, page_url });
+  
+  if (!referral_code) {
+    return res.status(400).json({ success: false, error: 'Referral code is required' });
+  }
+  
+  // Find agent by referral code
+  const agent = agents.find(a => a.referral_code === referral_code);
+  
+  if (!agent) {
+    console.log('Agent not found for referral code:', referral_code);
+    return res.status(404).json({ success: false, error: 'Agent not found' });
+  }
+  
+  // Update agent visit count
+  if (!agent.visits) agent.visits = 0;
+  agent.visits += 1;
+  
+  console.log(`Visit tracked for agent ${agent.full_name} (${agent.email}). Total visits: ${agent.visits}`);
+  
+  res.json({ 
+    success: true, 
+    message: 'Visit tracked successfully',
+    agent_name: agent.full_name,
+    total_visits: agent.visits
+  });
 });
 
-// Mock API endpoints for demo
-app.get('/api/agent/referral-link/:id', (req, res) => {
+// Get agent data by ID
+app.get('/api/agent/:id', (req, res) => {
   const { id } = req.params;
+  const agentId = parseInt(id);
+  
+  const agent = agents.find(a => a.id === agentId);
+  
+  if (!agent) {
+    return res.status(404).json({ success: false, error: 'Agent not found' });
+  }
+  
   res.json({
-    referral_link: `https://agent-system-2.onrender.com/shop?ref=AGENT${id}`,
-    referral_code: `AGENT${id}`
+    success: true,
+    agent: {
+      id: agent.id,
+      full_name: agent.full_name,
+      email: agent.email,
+      referral_code: agent.referral_code,
+      visits: agent.visits || 0,
+      sales: agent.sales || 0,
+      commissions: agent.totalCommissions || 0,
+      is_active: agent.is_active,
+      created_at: agent.created_at
+    }
+  });
+});
+
+// Get agent referral link
+app.get('/api/agent/:id/referral-link', (req, res) => {
+  const { id } = req.params;
+  const agentId = parseInt(id);
+  
+  const agent = agents.find(a => a.id === agentId);
+  
+  if (!agent) {
+    return res.status(404).json({ success: false, error: 'Agent not found' });
+  }
+  
+  const referralLink = `${req.protocol}://${req.get('host')}/vc/index.html?ref=${agent.referral_code}`;
+  
+  res.json({
+    success: true,
+    referral_link: referralLink,
+    referral_code: agent.referral_code
   });
 });
 
@@ -156,28 +270,59 @@ app.post('/api/record-sale', (req, res) => {
   });
 });
 
-// Mock sales data
+// Get agent sales
 app.get('/api/agent/:id/sales', (req, res) => {
-  res.json([
-    {
-      id: 1,
-      date: '2025-10-08',
-      product: 'עיסוי שוודי',
-      customer: 'customer1@example.com',
-      amount: 500,
-      commission: 50,
-      status: 'completed'
-    },
-    {
-      id: 2,
-      date: '2025-10-07',
-      product: 'עיסוי רקמות עמוק',
-      customer: 'customer2@example.com',
-      amount: 300,
-      commission: 30,
-      status: 'completed'
+  const agentId = parseInt(req.params.id);
+  const agentSales = sales.filter(sale => sale.agentId === agentId);
+  console.log(`Sales loaded from server: ${agentSales.length} sales for agent ${agentId}`);
+  res.json(agentSales);
+});
+
+// Add new sale
+app.post('/api/agent/:id/sales', (req, res) => {
+  const agentId = parseInt(req.params.id);
+  const { amount, product, customer } = req.body;
+  
+  // Find agent
+  const agent = agents.find(a => a.id === agentId);
+  if (!agent) {
+    return res.status(404).json({ error: 'Agent not found' });
+  }
+  
+  // Calculate commission (10%)
+  const commission = Math.round(amount * 0.1);
+  
+  // Create sale record
+  const sale = {
+    id: sales.length + 1,
+    agentId: agentId,
+    agentName: agent.full_name,
+    date: new Date().toISOString(),
+    product: product || 'מוצר כללי',
+    customer: customer || 'לקוח אנונימי',
+    amount: amount,
+    commission: commission,
+    status: 'completed'
+  };
+  
+  // Add to sales array
+  sales.push(sale);
+  
+  // Update agent stats
+  agent.sales = (agent.sales || 0) + 1;
+  agent.totalCommissions = (agent.totalCommissions || 0) + commission;
+  
+  console.log(`New sale recorded: Agent ${agent.full_name}, Amount: ₪${amount}, Commission: ₪${commission}`);
+  
+  res.json({
+    success: true,
+    sale: sale,
+    agent: {
+      id: agent.id,
+      sales: agent.sales,
+      totalCommissions: agent.totalCommissions
     }
-  ]);
+  });
 });
 
 // Agent registration endpoint (mock)
@@ -319,7 +464,7 @@ app.get('/api/agents/all', (req, res) => {
       activeAgents: agents.filter(a => a.is_active).length,
       pendingAgents: agents.filter(a => !a.is_active).length,
       totalCommissions: 1250,
-      payoutRequests: payouts.filter(p => p.status === 'pending').length
+      payoutRequests: payoutRequests.filter(p => p.status === 'pending').length
     }
   });
 });

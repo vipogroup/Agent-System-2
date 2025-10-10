@@ -51,24 +51,17 @@
         }
         
         .btn {
-            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
             border: none;
+            padding: 1rem 2rem;
             border-radius: 10px;
             font-size: 1.1rem;
             font-weight: bold;
-            text-decoration: none;
-            transition: all 0.3s ease;
             cursor: pointer;
-        }
-        
-        .btn-admin {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-        }
-        
-        .btn-agent {
-            background: linear-gradient(135deg, #4ecdc4, #44a08d);
-            color: white;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
         }
         
         .btn:hover {
@@ -76,31 +69,33 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
         
-        @media (max-width: 768px) {
-            .container {
-                padding: 2rem;
-            }
-            
-            h1 {
-                font-size: 2rem;
-            }
+        .btn-secondary {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        }
+        
+        .btn-admin {
+            background: linear-gradient(135deg, #a8e6cf, #88d8a3);
+        }
+        
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🏢 מערכת סוכנים</h1>
-        <p>ברוכים הבאים למערכת ניהול הסוכנים המתקדמת. בחרו את סוג המשתמש שלכם:</p>
+        <h1>🚀 מערכת סוכנים</h1>
+        <p>מערכת ניהול סוכנים מתקדמת עם מעקב הפניות</p>
         
         <div class="buttons">
-            <a href="/public/dashboard-admin.html" class="btn btn-admin">
+            <a href="/public/register-agent.html" class="btn">
+                🤝 הרשמת סוכן חדש
+            </a>
+            <a href="/agent-login.html" class="btn btn-secondary">
+                👤 כניסת סוכן
+            </a>
+            <a href="/admin-login.html" class="btn btn-admin">
                 👨‍💼 כניסת מנהל
-            </a>
-            <a href="/public/dashboard-agent.html" class="btn btn-agent">
-                🤝 כניסת סוכן
-            </a>
-            <a href="/public/register-agent.html" class="btn" style="background: linear-gradient(135deg, #ffecd2, #fcb69f); color: #333;">
-                ✨ הרשמת סוכן חדש
             </a>
         </div>
     </div>

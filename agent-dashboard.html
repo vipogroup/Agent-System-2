@@ -219,6 +219,11 @@
     </div>
 
     <div class="container">
+        <!-- Admin viewing notice -->
+        <div id="adminNotice" style="display: none; background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+            <strong>👨‍💼 מנהל צופה:</strong> אתה צופה בדשבורד של הסוכן כמנהל מערכת
+        </div>
+        
         <!-- Agent Info -->
         <div class="section">
             <h2>👋 שלום <span id="agentName">סוכן</span>!</h2>
@@ -302,8 +307,8 @@
     </div>
 
     <script>
-        // Load agent data from localStorage
-        function loadAgentData() {
+        // Load agent data from localStorage and server
+        async function loadAgentData() {
             const currentAgent = JSON.parse(localStorage.getItem('currentAgent'));
             
             if (!currentAgent) {
@@ -318,12 +323,44 @@
             document.getElementById('joinDate').textContent = new Date(currentAgent.created_at).toLocaleDateString('he-IL');
 
             // Generate referral link
-            const referralLink = window.location.origin + window.location.pathname.replace('agent-dashboard.html', 'vc/index.html') + '?ref=' + currentAgent.referral_code;
+            const referralLink = `${window.location.origin}/vc/index.html?ref=${currentAgent.referral_code}`;
             document.getElementById('referralLink').value = referralLink;
 
-            // Update stats
-            updateStats(currentAgent);
-            loadSalesHistory(currentAgent);
+            // Try to get updated data from server
+            try {
+                const [linkResponse, agentResponse] = await Promise.all([
+                    fetch(`/api/agent/${currentAgent.id}/referral-link`),
+                    fetch(`/api/agent/${currentAgent.id}`)
+                ]);
+                
+                if (linkResponse.ok) {
+                    const linkData = await linkResponse.json();
+                    if (linkData.referral_link) {
+                        document.getElementById('referralLink').value = linkData.referral_link;
+                    }
+                }
+                
+                if (agentResponse.ok) {
+                    const agentData = await agentResponse.json();
+                    if (agentData.success && agentData.agent) {
+                        // Update agent data with server data
+                        const updatedAgent = { ...currentAgent, ...agentData.agent };
+                        localStorage.setItem('currentAgent', JSON.stringify(updatedAgent));
+                        updateStats(updatedAgent);
+                        console.log('Agent data updated from server:', updatedAgent);
+                    } else {
+                        updateStats(currentAgent);
+                    }
+                } else {
+                    updateStats(currentAgent);
+                }
+            } catch (error) {
+                console.log('Could not fetch updated data from server:', error);
+                updateStats(currentAgent);
+            }
+
+            // Load sales history
+            await loadSalesHistory(currentAgent);
         }
 
         // Update statistics
@@ -334,10 +371,26 @@
             document.getElementById('totalCommissions').textContent = '₪' + (agent.commissions || 0);
         }
 
-        // Load sales history
-        function loadSalesHistory(agent) {
-            const salesHistory = JSON.parse(localStorage.getItem('sales_' + agent.id) || '[]');
+        // Load sales history from server and localStorage
+        async function loadSalesHistory(agent) {
             const tbody = document.getElementById('salesTable');
+            let salesHistory = [];
+
+            // Try to get sales from server first
+            try {
+                const response = await fetch(`/api/agent/${agent.id}/sales`);
+                if (response.ok) {
+                    salesHistory = await response.json();
+                    console.log('Sales loaded from server:', salesHistory);
+                } else {
+                    // Fallback to localStorage
+                    salesHistory = JSON.parse(localStorage.getItem('sales_' + agent.id) || '[]');
+                    console.log('Sales loaded from localStorage:', salesHistory);
+                }
+            } catch (error) {
+                console.log('Error loading sales from server, using localStorage:', error);
+                salesHistory = JSON.parse(localStorage.getItem('sales_' + agent.id) || '[]');
+            }
             
             if (salesHistory.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">אין מכירות עדיין</td></tr>';
@@ -399,52 +452,95 @@
             window.location.href = mailtoUrl;
         }
 
-        // Simulate sale for demo
-        function simulateSale() {
+        // Simulate sale (for demo)
+        async function simulateSale() {
             const currentAgent = JSON.parse(localStorage.getItem('currentAgent'));
-            if (!currentAgent) return;
+            if (!currentAgent) {
+                alert('לא נמצא סוכן מחובר');
+                return;
+            }
 
-            // Create sale record
-            const sale = {
-                id: Date.now(),
-                date: new Date().toISOString(),
-                amount: 2500,
-                commission: 250, // 10%
-                product: 'כורסת עיסוי VC',
-                customer: 'לקוח דמו'
-            };
-
-            // Update agent stats
-            currentAgent.visits += 1;
-            currentAgent.sales += 1;
-            currentAgent.commissions += sale.commission;
-
-            // Save updated agent data
-            localStorage.setItem('currentAgent', JSON.stringify(currentAgent));
-            localStorage.setItem('agent_' + currentAgent.id, JSON.stringify(currentAgent));
-
-            // Save sale record
-            const salesHistory = JSON.parse(localStorage.getItem('sales_' + currentAgent.id) || '[]');
-            salesHistory.unshift(sale);
-            localStorage.setItem('sales_' + currentAgent.id, JSON.stringify(salesHistory));
-
-            alert(`🎉 מכירה נרשמה בהצלחה!\n\nסכום: ₪${sale.amount}\nעמלה: ₪${sale.commission}\n\nהסטטיסטיקות עודכנו!`);
+            // Generate random sale
+            const saleAmount = Math.floor(Math.random() * 500) + 200; // 200-700
             
-            // Refresh display
-            loadAgentData();
+            try {
+                // Send sale to server
+                const response = await fetch(`/api/agent/${currentAgent.id}/sales`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount: saleAmount,
+                        product: 'עיסוי שוודי',
+                        customer: 'לקוח דמו'
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // Update local agent data
+                    currentAgent.sales = result.agent.sales;
+                    currentAgent.totalCommissions = result.agent.totalCommissions;
+                    currentAgent.commissions = result.agent.totalCommissions; // For backward compatibility
+                    
+                    localStorage.setItem('currentAgent', JSON.stringify(currentAgent));
+
+                    alert(`🎉 מכירה נרשמה בהצלחה!\n\nסכום: ₪${result.sale.amount}\nעמלה: ₪${result.sale.commission}\n\nהסטטיסטיקות עודכנו!`);
+                    
+                    // Refresh display
+                    await loadAgentData();
+                } else {
+                    throw new Error('Server error');
+                }
+            } catch (error) {
+                console.error('Error recording sale:', error);
+                alert('שגיאה ברישום המכירה. נסה שוב מאוחר יותר.');
+            }
         }
 
         // Logout
         function logout() {
             if (confirm('האם אתה בטוח שברצונך להתנתק?')) {
                 localStorage.removeItem('currentAgent');
+                localStorage.removeItem('adminViewingAgent'); // Clean admin viewing flag
                 alert('התנתקת בהצלחה');
-                window.location.href = 'github-system.html';
+                window.location.href = '/';
             }
         }
 
         // Load data on page load
-        document.addEventListener('DOMContentLoaded', loadAgentData);
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if admin is viewing
+            const adminViewing = localStorage.getItem('adminViewingAgent');
+            if (adminViewing === 'true') {
+                document.getElementById('adminNotice').style.display = 'block';
+            }
+            
+            loadAgentData();
+            
+            // Auto refresh every 10 seconds to show updated visit counts
+            setInterval(async () => {
+                const currentAgent = JSON.parse(localStorage.getItem('currentAgent'));
+                if (currentAgent) {
+                    try {
+                        const response = await fetch(`/api/agent/${currentAgent.id}`);
+                        if (response.ok) {
+                            const agentData = await response.json();
+                            if (agentData.success && agentData.agent) {
+                                const updatedAgent = { ...currentAgent, ...agentData.agent };
+                                localStorage.setItem('currentAgent', JSON.stringify(updatedAgent));
+                                updateStats(updatedAgent);
+                                console.log('Stats auto-updated:', updatedAgent);
+                            }
+                        }
+                    } catch (error) {
+                        console.log('Auto-refresh failed:', error);
+                    }
+                }
+            }, 10000); // Refresh every 10 seconds
+        });
     </script>
 </body>
 </html>

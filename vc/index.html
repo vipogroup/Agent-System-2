@@ -748,7 +748,7 @@
     <script>
         (function() {
             // כתובת השרת - עדכן בהתאם לשרת שלך
-            const TRACKING_SERVER = 'https://agent-system-2.onrender.com'; // או http://192.168.10.172:3000 לשרת מקומי
+            const TRACKING_SERVER = window.location.origin; // השרת המקומי
             
             // קבלת קוד ההפניה מה-URL
             function getReferralCode() {

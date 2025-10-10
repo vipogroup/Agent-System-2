@@ -1,137 +1,124 @@
-# 🚀 מערכת שותפים/סוכנים מתקדמת - גרסה מעודכנת
+# 🚀 Agent System 2.0 - מערכת סוכנים מתקדמת
 
-מערכת מלאה לניהול שותפים וסוכנים עם דשבורדים מתקדמים, מותאמת למובייל ומחשב.
+מערכת שיווק שותפים מודרנית עם מעקב בזמן אמת וניהול עמלות מתקדם.
 
-## 🔒 **שיפורי אבטחה חדשים:**
-- ✅ **הסרת פרטי התחברות קשיחים** - אין יותר סיסמאות מוקדדות בקוד
-- ✅ **אבטחת JWT משופרת** - דרישת הגדרת JWT_SECRET בסביבת ייצור
-- ✅ **הגנה מפני SQL Injection** - כל השאילתות מוגנות
-- ✅ **בדיקות תקינות מלאות** - הקוד נבדק ומאומת
+## ✨ תכונות עיקריות
 
-## ✨ **תכונות עיקריות:**
-- 🔐 **מערכת אימות מלאה** - JWT, הצפנת סיסמאות
-- 👥 **ניהול סוכנים** - רישום, התחברות, פרופילים
-- 💰 **מעקב עמלות** - חישוב אוטומטי, בקשות תשלום
-- 📊 **דשבורד מנהל** - ניהול מלא של המערכת
-- 📱 **מותאם למובייל** - עובד מושלם על כל המכשירים
-- 🌐 **גישה מרחוק** - נגיש מכל מקום ברשת
+- **🤝 ניהול סוכנים**: מערכת רישום וניהול סוכנים מלאה
+- **📊 מעקב עמלות בזמן אמת**: מעקב חי אחר ביקורים, מכירות ועמלות
+- **👨‍💼 דשבורד מנהל**: ממשק ניהול מקיף עם כל הנתונים
+- **🔗 מערכת הפניות**: קודי הפניה ייחודיים ומעקב מתקדם
+- **💰 רישום מכירות**: מערכת מכירות אמיתית עם API מלא
+- **📱 תומך מובייל**: עובד על כל המכשירים
 
-## דרישות
-- Node.js 18+
-- npm
+## 🚀 התחלה מהירה
 
-## 🚀 **התקנה מהירה**
-
-### 1. **הורדה והתקנה:**
 ```bash
-git clone https://github.com/vipogroup/Agent-system.git
-cd Agent-system
+# שכפול הפרויקט
+git clone https://github.com/vipogroup/Agent-System-2.git
+cd Agent-System-2
+
+# התקנת תלויות
 npm install
+
+# הפעלת השרת
+npm start
+
+# גישה למערכת
+# http://localhost:10000
 ```
 
-### 2. **הגדרת משתני סביבה:**
-צור קובץ `.env` עם התוכן הבא:
+## 🔐 גישת מנהל
+
+- **כתובת**: `/admin-login.html`
+- **שם משתמש**: `admin`
+- **סיסמה**: `admin` או `123456`
+
+## 👤 תכונות סוכן
+
+- דשבורד אישי עם סטטיסטיקות מלאות
+- קישורי הפניה ייחודיים
+- מעקב עמלות בזמן אמת
+- כלי שיתוף ברשתות חברתיות
+- מערכת מכירות מתקדמת
+
+## 🌐 דפי המערכת
+
+### דפי כניסה ורישום:
+- `/` - עמוד ראשי
+- `/admin-login.html` - כניסת מנהל
+- `/agent-login.html` - כניסת סוכן
+- `/public/register-agent.html` - רישום סוכן חדש
+
+### דשבורדים:
+- `/public/admin-dashboard-fixed.html` - דשבורד מנהל
+- `/agent-dashboard.html` - דשבורד סוכן
+
+### אתר מכירות:
+- `/vc/index.html` - אתר המכירות עם מעקב הפניות
+
+## 🔌 API Endpoints
+
+```javascript
+// ניהול סוכנים
+GET    /api/agents/all           // כל הסוכנים
+POST   /api/agents/register      // רישום סוכן חדש
+GET    /api/agent/:id           // נתוני סוכן ספציפי
+
+// מערכת מכירות
+GET    /api/agent/:id/sales     // מכירות של סוכן
+POST   /api/agent/:id/sales     // רישום מכירה חדשה
+
+// מעקב ביקורים
+POST   /api/track-visit         // רישום ביקור
+GET    /health                  // בדיקת תקינות שרת
+```
+
+## ⚙️ משתני סביבה
+
 ```env
-JWT_SECRET=your_super_secret_key_here
-PORT=3000
-COMMISSION_RATE=0.10
-CLEAR_WINDOW_DAYS=14
-COOKIE_TTL_DAYS=30
+NODE_ENV=production              # סביבת הפעלה
+PORT=10000                      # פורט השרת
+JWT_SECRET=your_secret_here     # מפתח הצפנה
+COMMISSION_RATE=0.10            # אחוז עמלה (10%)
+CLEAR_WINDOW_DAYS=14            # ימים לניקוי נתונים
+COOKIE_TTL_DAYS=30              # תוקף עוגיות
 ```
 
-### 3. **יצירת מנהל ראשון:**
-1. הרץ את השרת: `npm run dev`
-2. הירשם כמשתמש חדש דרך הממשק
-3. עצור את השרת ועדכן את התפקיד במסד הנתונים:
-```bash
-# פתח את מסד הנתונים (SQLite)
-sqlite3 data.sqlite
-UPDATE agents SET role = 'admin' WHERE email = 'your-email@example.com';
-.quit
-```
+## 🚀 פריסה לפרודקשן
 
-### 4. **הפעלת השרת:**
-```bash
-npm run dev
-```
+המערכת מוכנה לפריסה על Render.com עם קובץ `render.yaml` מוכן.
 
-השרת יפעל על: `http://localhost:3000`
+### שלבי פריסה:
+1. העלאה לגיטהאב
+2. חיבור ל-Render.com
+3. פריסה אוטומטית
 
-### 5. **גישה למערכת:**
-- **מנהל:** `http://localhost:3000/public/dashboard-admin.html`
-- **סוכן:** `http://localhost:3000/public/dashboard-agent.html`
+## 📊 סטטיסטיקות מערכת
 
-## 🌐 **פריסה בענן (Render)**
+- **18 קבצים חיוניים** בלבד (אחרי ניקוי)
+- **מערכת מכירות אמיתית** עם API מלא
+- **רענון אוטומטי** של נתונים
+- **תמיכה מלאה בעברית** ו-RTL
 
-המערכת מוכנה לפריסה מיידית ב-Render:
+## 🛠️ טכנולוגיות
 
-1. **התחבר ל-[Render](https://render.com)**
-2. **צור Web Service חדש**
-3. **חבר את הרפוזיטורי:** `https://github.com/vipogroup/Agent-System-2`
-4. **Render יזהה אוטומטית** את קובץ `render.yaml`
-5. **לחץ Deploy** - המערכת תהיה זמינה תוך דקות!
+- **Backend**: Node.js + Express
+- **Frontend**: HTML5 + CSS3 + JavaScript
+- **Database**: SQLite (בזיכרון לדמו)
+- **Deployment**: Render.com
+- **Version Control**: Git + GitHub
 
-### **אחרי הפריסה:**
-- **כתובת ציבורית:** `https://your-app-name.onrender.com`
-- **מנהל:** `https://your-app-name.onrender.com/public/dashboard-admin.html`
-- **סוכן:** `https://your-app-name.onrender.com/public/dashboard-agent.html`
+## 📞 תמיכה
 
-## קבצים חשובים
-- `src/server.js` – נקודת כניסה.
-- `src/db.js` – אתחול SQLite + סכימה אוטומטית.
-- `src/auth.js` – JWT, מחלקת אמצעי זיהוי.
-- `src/routes.js` – כל ה-API.
-- `src/jobs/clearCommissions.js` – ג'וב שמאשר עמלות אחרי חלון ביטולים.
-- `public/` – דפי דשבורד לדמו.
+לתמיכה טכנית או שאלות:
+- **אימייל**: websites3d@gmail.com
+- **טלפון**: 0555545821
 
-## משתני סביבה (.env)
-```
-JWT_SECRET=change_this_secret
-PORT=3000
-CLEAR_WINDOW_DAYS=14
-COOKIE_TTL_DAYS=30
-```
+## 📄 רישיון
 
-## זרימת עבודה
-1. סוכן נרשם (`POST /api/agents/register`) → מקבל token.
-2. משתמש מגיע עם `?ref=CODE` → `POST /api/track?ref=CODE` שומר עוגיה.
-3. תשלום מצליח → קוראים ל-`POST /api/orders` (בדמו זה ידני) → נוצרת עמלה `PENDING_CLEARANCE`.
-4. ג'וב יומי (`node src/jobs/clearCommissions.js`) מעביר ל-`CLEARED`.
-5. סוכן מבקש משיכה (`POST /api/payouts/request`).
-6. אדמין מאשר/מסמן כמשולם.
+MIT License - ראה קובץ LICENSE לפרטים נוספים.
 
-## אזהרות ופתיחות
-- זהו **דמו בסיסי** – ללא הקשחה מלאה, וללא איפוסי סיסמה/2FA.
-- לפני פרודקשן: להקשיח CORS, Rate Limiting, אימות קלט, ולוגים.
-- חיבור לסליקה אמיתית: לבנות Webhooks בנתיבי ה־API או בנתיבים חדשים.
+---
 
-## רישוי
-MIT
-
-
-## שינוי שיעור העמלה (ברירת מחדל 10% = 0.10)
-- דרך משתנה סביבה: `COMMISSION_RATE=0.10` ( fallback אם אין ערך ב-DB ).
-- או דרך API לאדמין:
-  - `GET /admin/settings/commission-rate`  (דורש אדמין + JWT)
-  - `POST /admin/settings/commission-rate` עם גוף `{ "rate": 0.12 }` לשינוי ל-12%.
-
-
-## אבטחה ושיפורים שבוצעו
-- סיסמאות נשמרות עם **bcrypt** (לא SHA-256).
-- רישום ציבורי יוצר **Agent בלבד**; יצירת Admin נעשית בסקריפט seed.
-- סכומים נשמרים ב-**אגורות** (INTEGER cents) למניעת שגיאות עיגול.
-- אפשרות **override** לעמלה פר-סוכן (`commission_rate_override`).
-- **Rate limit** בסיסי ל-API.
-
-### יצירת אדמין ראשון
-```bash
-node src/seedAdmin.js
-```
-
-### שיעור עמלה ברירת מחדל ו-override
-- גלובלי: `POST /admin/settings/commission-rate { "rate": 0.10 }`
-- פר-סוכן: `POST /admin/agents/:id/commission-override { "rate": 0.12 }` או `null` להסרה.
-
-### הזמנה בדמו
-`POST /api/orders` עם גוף `{ "total_amount": 100 }` (₪100) — יישמרו אגורות אוטומטית.
-
+**🎯 מערכת מוכנה לשימוש מיידי עם כל הפונקציות הנדרשות!**
