@@ -320,12 +320,17 @@ async function saveAgents(agents) {
       console.log('🍃 Agents saved to MongoDB');
     }
     
-    // Backup: Save to file system
+    // CRITICAL: Save to Environment Variable (survives restarts)
+    process.env[ENV_AGENTS_KEY] = JSON.stringify(agents);
+    console.log('🔒 Agents saved to environment variable (persistent)');
+    
+    // Backup: Save to file system (temporary)
     fs.writeFileSync(AGENTS_FILE, JSON.stringify(agents, null, 2));
-    console.log('📁 Agents saved to file system');
+    console.log('📁 Agents saved to file system (temporary)');
     
     // Log for manual environment variable backup
-    console.log('📝 Agents data for env backup:', JSON.stringify(agents));
+    console.log('📝 IMPORTANT - Set this in Render Environment Variables:');
+    console.log(`${ENV_AGENTS_KEY}=${JSON.stringify(agents)}`);
   } catch (error) {
     console.error('Error saving agents:', error);
   }
@@ -392,12 +397,17 @@ async function saveSales(sales) {
       console.log('🍃 Sales saved to MongoDB');
     }
     
-    // Backup: Save to file system
+    // CRITICAL: Save to Environment Variable (survives restarts)
+    process.env[ENV_SALES_KEY] = JSON.stringify(sales);
+    console.log('🔒 Sales saved to environment variable (persistent)');
+    
+    // Backup: Save to file system (temporary)
     fs.writeFileSync(SALES_FILE, JSON.stringify(sales, null, 2));
-    console.log('📁 Sales saved to file system');
+    console.log('📁 Sales saved to file system (temporary)');
     
     // Log for manual environment variable backup
-    console.log('📝 Sales data for env backup:', JSON.stringify(sales));
+    console.log('📝 IMPORTANT - Set this in Render Environment Variables:');
+    console.log(`${ENV_SALES_KEY}=${JSON.stringify(sales)}`);
   } catch (error) {
     console.error('Error saving sales:', error);
   }
@@ -1358,8 +1368,7 @@ app.get('/admin', (req, res) => {
 });
 
 // Data backup endpoint for manual backup
-app.get('/api/backup/data', (req, res) => {
-  console.log('📦 Creating data backup...');
+app.get('/api/backup', (req, res) => {
   
   const backup = {
     agents: agents,
@@ -1378,6 +1387,37 @@ app.get('/api/backup/data', (req, res) => {
       sales_data: JSON.stringify(sales)
     }
   });
+});
+
+// Force save to environment variables endpoint
+app.post('/api/force-save', (req, res) => {
+  try {
+    // Force save current data to environment variables
+    process.env[ENV_AGENTS_KEY] = JSON.stringify(agents);
+    process.env[ENV_SALES_KEY] = JSON.stringify(sales);
+    
+    console.log('🔒 FORCE SAVE - Data saved to environment variables');
+    console.log(`📊 Agents: ${agents.length}, Sales: ${sales.length}`);
+    
+    res.json({
+      success: true,
+      message: 'Data force-saved to environment variables',
+      agents_count: agents.length,
+      sales_count: sales.length,
+      timestamp: new Date().toISOString(),
+      env_vars: {
+        [ENV_AGENTS_KEY]: `${agents.length} agents saved`,
+        [ENV_SALES_KEY]: `${sales.length} sales saved`
+      }
+    });
+  } catch (error) {
+    console.error('❌ Force save error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to force save data',
+      message: error.message
+    });
+  }
 });
 
 // Data restore endpoint
