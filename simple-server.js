@@ -56,18 +56,54 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 
-// 🚦 Rate Limiting
+// 🚦 Rate Limiting - Optimized for normal usage
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { error: 'יותר מדי בקשות מכתובת IP זו, נסה שוב בעוד 15 דקות' }
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Increased from 100 to 1000 requests per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { 
+    error: 'יותר מדי בקשות מכתובת IP זו, נסה שוב בעוד 15 דקות',
+    code: 'RATE_LIMIT_EXCEEDED'
+  },
+  handler: (req, res) => {
+    console.log(`🚦 General rate limit exceeded for IP: ${req.ip}`);
+    res.status(429).json({
+      error: 'יותר מדי בקשות מכתובת IP זו, נסה שוב בעוד 15 דקות',
+      code: 'RATE_LIMIT_EXCEEDED'
+    });
+  }
 });
 
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  skipSuccessfulRequests: true,
-  message: { error: 'יותר מדי ניסיונות כניסה שגויים, נסה שוב בעוד 15 דקות' }
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Increased from 5 to 10 login attempts
+  skipSuccessfulRequests: true, // Don't count successful logins
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { 
+    error: 'יותר מדי ניסיונות כניסה שגויים, נסה שוב בעוד 15 דקות',
+    code: 'LOGIN_RATE_LIMIT_EXCEEDED'
+  },
+  handler: (req, res) => {
+    console.log(`🔐 Login rate limit exceeded for IP: ${req.ip}, Email: ${req.body?.email}`);
+    res.status(429).json({
+      error: 'יותר מדי ניסיונות כניסה שגויים, נסה שוב בעוד 15 דקות',
+      code: 'LOGIN_RATE_LIMIT_EXCEEDED'
+    });
+  }
+});
+
+// 📊 Dashboard-specific rate limiter (more permissive)
+const dashboardLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 200, // 200 requests per 5 minutes for dashboard
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { 
+    error: 'יותר מדי בקשות לדשבורד, נסה שוב בעוד 5 דקות',
+    code: 'DASHBOARD_RATE_LIMIT_EXCEEDED'
+  }
 });
 
 // 🔑 JWT Functions
@@ -483,7 +519,7 @@ app.get('/agent-login.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'agent-login.html'));
 });
 
-app.get('/agent-dashboard.html', (req, res) => {
+app.get('/agent-dashboard.html', dashboardLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, 'agent-dashboard.html'));
 });
 
@@ -1181,7 +1217,7 @@ app.post('/api/debug/register-agent', async (req, res) => {
 });
 
 // Admin API endpoints for dashboard
-app.get('/api/agents/all', (req, res) => {
+app.get('/api/agents/all', dashboardLimiter, (req, res) => {
   console.log('Getting all agents, current count:', agents.length);
   
   res.json({

@@ -1,0 +1,41 @@
+[
+  {
+    "id": 1,
+    "full_name": "יוסי כהן",
+    "email": "yossi@example.com",
+    "password": "$2a$10$/V7kMUo6E.zI7e/6v5TQJOBnEPESVmmEodpjhBPKT5L3n7RBCuu0S",
+    "phone": "0501234567",
+    "referral_code": "YOSSI2024",
+    "is_active": true,
+    "role": "agent",
+    "totalCommissions": 0,
+    "visits": 0,
+    "sales": 0,
+    "created_at": "2025-10-10T14:12:16.785Z"
+  },
+  {
+    "id": 2,
+    "full_name": "שרה לוי",
+    "email": "sara@example.com",
+    "password": "$2a$10$kEh28qXYYkTdI7o90UUhiO2QGpepJJsRg/FPToK.ZNKqRbFWVGJA6",
+    "phone": "0502345678",
+    "referral_code": "SARA2024",
+    "is_active": true,
+    "role": "agent",
+    "totalCommissions": 0,
+    "visits": 0,
+    "sales": 0,
+    "created_at": "2025-10-10T14:12:16.905Z"
+  },
+  {
+    "id": 3,
+    "full_name": "דוד אברהם",
+    "email": "david@example.com",
+    "password": "$2a$10$gKRSHx1IurQ950pUYUkz4OIWfvB2U.zp.3klEaIS0e8tIBAXN2016",
+    "phone": "0503456789",
+    "referral_code": "DAVID2024",
+    "is_active": false,
+    "role": "agent",
+    "totalCommissions": 0
+  }
+]
