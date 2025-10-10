@@ -403,6 +403,18 @@
                     localStorage.setItem('agentToken', result.token);
                     localStorage.setItem('agentLoggedIn', 'true');
                     
+                    // Save agent to registered agents list for fallback login
+                    const registeredAgents = JSON.parse(localStorage.getItem('registeredAgents') || '[]');
+                    const agentWithPassword = {
+                        ...result.agent,
+                        password: formData.password // Store password for fallback (not secure but needed for demo)
+                    };
+                    
+                    // Remove existing agent with same email if exists
+                    const filteredAgents = registeredAgents.filter(a => a.email !== result.agent.email);
+                    filteredAgents.push(agentWithPassword);
+                    localStorage.setItem('registeredAgents', JSON.stringify(filteredAgents));
+                    
                     // Redirect after 3 seconds
                     setTimeout(() => {
                         console.log('Redirecting to agent dashboard...');

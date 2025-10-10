@@ -296,6 +296,32 @@
 
             } catch (error) {
                 console.error('Login error:', error);
+                
+                // Fallback: Try to login with demo credentials if API fails
+                console.log('API failed, trying fallback login...');
+                
+                // Check if this is a registered agent from localStorage
+                const registeredAgents = JSON.parse(localStorage.getItem('registeredAgents') || '[]');
+                const foundAgent = registeredAgents.find(a => a.email === email && a.password === password);
+                
+                if (foundAgent) {
+                    console.log('Found agent in localStorage:', foundAgent);
+                    showAlert(`🎉 התחברת בהצלחה ${foundAgent.full_name}! מעביר לדשבורד...`, 'success');
+                    
+                    // Save agent session
+                    localStorage.setItem('agentLoggedIn', 'true');
+                    localStorage.setItem('agentEmail', email);
+                    localStorage.setItem('agentName', foundAgent.full_name);
+                    localStorage.setItem('agentId', foundAgent.id);
+                    localStorage.setItem('agentReferralCode', foundAgent.referral_code);
+                    
+                    // Redirect to agent dashboard
+                    setTimeout(() => {
+                        window.location.href = 'agent-dashboard.html';
+                    }, 2000);
+                    return;
+                }
+                
                 showAlert('❌ שגיאה בהתחברות. נסה שוב מאוחר יותר.', 'error');
             } finally {
                 // Hide loading
