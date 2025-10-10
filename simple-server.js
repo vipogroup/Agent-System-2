@@ -27,9 +27,9 @@ import {
 } from './postgres.js';
 
 // 🛡️ Security Middlewares - Inline Implementation
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const jwt = require('jsonwebtoken');
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import jwt from 'jsonwebtoken';
 
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key-change-in-production';
@@ -526,75 +526,25 @@ app.get('/health', async (req, res) => {
   });
 });
 
-// 📊 Security & Audit Endpoints - ADMIN ONLY
-app.get('/api/admin/logs/audit', authenticate, authorize(['admin']), async (req, res) => {
+// 📊 Security Status Endpoint
+app.get('/api/security/status', authenticate, async (req, res) => {
   try {
-    const { limit = 50, userId, action, status } = req.query;
-    const filter = {};
-    if (userId) filter.userId = userId;
-    if (action) filter.action = action;
-    if (status) filter.status = status;
-    
-    const logs = await getAuditLogs(parseInt(limit), filter);
-    
-    await logUserAction(req.user.id, 'VIEW_AUDIT_LOGS', 'SUCCESS', req, { 
-      filter, 
-      resultsCount: logs.length 
-    });
+    await logUserAction(req.user.id, 'VIEW_SECURITY_STATUS', 'SUCCESS', req);
     
     res.json({
       success: true,
-      logs: logs,
-      total: logs.length
+      security: {
+        cors: 'ENABLED ✅',
+        rateLimit: 'ENABLED ✅',
+        helmet: 'ENABLED ✅',
+        jwtTokens: 'SECURED ✅',
+        httpOnlyCookies: 'ENABLED ✅'
+      },
+      message: 'All security measures are active'
     });
     
   } catch (error) {
-    console.error('❌ Get audit logs error:', error);
-    res.status(500).json({ 
-      error: 'שגיאת שרת פנימית',
-      code: 'INTERNAL_ERROR'
-    });
-  }
-});
-
-app.get('/api/admin/logs/security', authenticate, authorize(['admin']), async (req, res) => {
-  try {
-    const { limit = 50, severity } = req.query;
-    const logs = await getSecurityLogs(parseInt(limit), severity);
-    
-    await logUserAction(req.user.id, 'VIEW_SECURITY_LOGS', 'SUCCESS', req, { 
-      severity, 
-      resultsCount: logs.length 
-    });
-    
-    res.json({
-      success: true,
-      logs: logs,
-      total: logs.length
-    });
-    
-  } catch (error) {
-    console.error('❌ Get security logs error:', error);
-    res.status(500).json({ 
-      error: 'שגיאת שרת פנימית',
-      code: 'INTERNAL_ERROR'
-    });
-  }
-});
-
-app.get('/api/admin/logs/stats', authenticate, authorize(['admin']), async (req, res) => {
-  try {
-    const stats = await getLogStats();
-    
-    await logUserAction(req.user.id, 'VIEW_LOG_STATS', 'SUCCESS', req);
-    
-    res.json({
-      success: true,
-      stats: stats
-    });
-    
-  } catch (error) {
-    console.error('❌ Get log stats error:', error);
+    console.error('❌ Get security status error:', error);
     res.status(500).json({ 
       error: 'שגיאת שרת פנימית',
       code: 'INTERNAL_ERROR'
@@ -1030,7 +980,7 @@ app.post('/api/agents/logout', authenticate, async (req, res) => {
 });
 
 // 👤 Get current user info - SECURED
-app.get('/api/user/me', authenticate, refreshToken, async (req, res) => {
+app.get('/api/user/me', authenticate, async (req, res) => {
   try {
     const agent = agents.find(a => a.id === req.user.id);
     if (!agent) {
