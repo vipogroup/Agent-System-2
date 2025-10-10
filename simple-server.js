@@ -235,16 +235,7 @@ app.post('/api/check-email', (req, res) => {
   });
 });
 
-app.get('/api/agent/referral-link/:agentId', (req, res) => {
-  const { agentId } = req.params;
-  const referralCode = 'DEMO' + agentId.slice(-4);
-  
-  res.json({
-    success: true,
-    referral_code: referralCode,
-    referral_link: `https://agent-system-2.onrender.com/vc/index.html?ref=${referralCode}`,
-  });
-});
+// Removed duplicate/incorrect referral link endpoint
 
 // Track visits with referral codes
 app.post('/api/track-visit', (req, res) => {
