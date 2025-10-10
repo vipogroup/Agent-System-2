@@ -399,7 +399,7 @@
             <div class="alert alert-info">
                 <strong>לצורך בדיקה:</strong> לחץ על הכפתור כדי לסמלץ מכירה שתזכה אותך בעמלה
             </div>
-            <button class="btn btn-success" onclick="simulateSale()">💰 סמלץ מכירה של ₪2500</button>
+            <button class="btn btn-success" onclick="simulateSale()">💰 סמלץ מכירה של ₪3990</button>
         </div>
     </div>
 
@@ -528,7 +528,7 @@
         // Share to WhatsApp
         function shareToWhatsApp() {
             const link = document.getElementById('referralLink').value;
-            const message = `היי! 👋\n\nאני רוצה להציג לך מוצר מדהים - כורסת עיסוי ביתית מקצועית במחיר מיוחד!\n\n🔗 לחץ כאן לרכישה:\n${link}\n\n💰 מחיר מיוחד: 2,500₪ בלבד!\n\nתודה! 😊`;
+            const message = `היי! 👋\n\nאני רוצה להציג לך מוצר מדהים - כורסת עיסוי ביתית מקצועית במחיר מיוחד!\n\n🔗 לחץ כאן לרכישה:\n${link}\n\n💰 מחיר מיוחד: 3,990₪ בלבד!\n\nתודה! 😊`;
             const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         }
@@ -544,7 +544,7 @@
         function shareToEmail() {
             const link = document.getElementById('referralLink').value;
             const subject = 'כורסת עיסוי מקצועית - מבצע מיוחד!';
-            const body = `היי!\n\nרציתי לשתף איתך משהו מיוחד - כורסת עיסוי ביתית מקצועית במחיר מעולה!\n\n🔗 לחץ כאן לרכישה: ${link}\n\n💰 מחיר מיוחד: 2,500₪ בלבד!\n\nבהצלחה!`;
+            const body = `היי!\n\nרציתי לשתף איתך משהו מיוחד - כורסת עיסוי ביתית מקצועית במחיר מעולה!\n\n🔗 לחץ כאן לרכישה: ${link}\n\n💰 מחיר מיוחד: 3,990₪ בלבד!\n\nבהצלחה!`;
             const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             window.location.href = mailtoUrl;
         }
@@ -588,7 +588,7 @@
         // Share to Telegram
         function shareToTelegram() {
             const link = document.getElementById('referralLink').value;
-            const message = `🪑 כורסת עיסוי ביתית מקצועית במחיר מיוחד! 💆‍♀️\n\n✨ חוויית עיסוי מפנקת בבית שלכם\n💰 מחיר מיוחד: 2,500₪ בלבד!\n🚚 משלוח חינם עד הבית\n\n🔗 לחץ כאן לרכישה:\n${link}\n\n#עיסוי #כורסה #מבצע #בריאות`;
+            const message = `🪑 כורסת עיסוי ביתית מקצועית במחיר מיוחד! 💆‍♀️\n\n✨ חוויית עיסוי מפנקת בבית שלכם\n💰 מחיר מיוחד: 3,990₪ בלבד!\n🚚 משלוח חינם עד הבית\n\n🔗 לחץ כאן לרכישה:\n${link}\n\n#עיסוי #כורסה #מבצע #בריאות`;
             const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(message)}`;
             window.open(telegramUrl, '_blank');
         }
@@ -601,8 +601,8 @@
                 return;
             }
 
-            // Generate random sale
-            const saleAmount = Math.floor(Math.random() * 500) + 200; // 200-700
+            // Generate fixed sale amount
+            const saleAmount = 3990; // Fixed amount: 3990₪
             
             try {
                 // Send sale to server
