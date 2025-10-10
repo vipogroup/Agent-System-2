@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcryptjs';
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -321,6 +322,62 @@ app.post('/api/agent/:id/sales', (req, res) => {
       id: agent.id,
       sales: agent.sales,
       totalCommissions: agent.totalCommissions
+    }
+  });
+});
+
+// Password reset endpoint
+app.post('/api/agent/:id/reset-password', (req, res) => {
+  const agentId = parseInt(req.params.id);
+  
+  // Find agent
+  const agent = agents.find(a => a.id === agentId);
+  if (!agent) {
+    return res.status(404).json({ error: 'Agent not found' });
+  }
+  
+  // Generate temporary password
+  const tempPassword = 'TEMP' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  
+  // Hash the temporary password
+  const hashedPassword = bcrypt.hashSync(tempPassword, 10);
+  
+  // Update agent password
+  agent.password = hashedPassword;
+  agent.password_reset_at = new Date().toISOString();
+  
+  console.log(`Password reset for agent ${agent.full_name} (${agent.email}): ${tempPassword}`);
+  
+  // In production, this would send WhatsApp message
+  // For now, we'll simulate it
+  const whatsappMessage = `🔐 איפוס סיסמה - מערכת סוכנים
+
+שלום ${agent.full_name},
+
+הסיסמה שלך אופסה על ידי המנהל.
+
+🔑 הסיסמה החדשה שלך: ${tempPassword}
+
+👆 היכנס למערכת עם הסיסמה החדשה:
+${process.env.NODE_ENV === 'production' ? 'https://agent-system-2.onrender.com' : 'http://localhost:10000'}/agent-login.html
+
+💡 מומלץ לשנות את הסיסמה אחרי הכניסה הראשונה.
+
+בהצלחה! 🚀`;
+
+  console.log('WhatsApp message to send:', whatsappMessage);
+  console.log('Agent phone:', agent.phone);
+  
+  res.json({
+    success: true,
+    message: 'Password reset successfully',
+    tempPassword: tempPassword, // Only for development/testing
+    whatsappMessage: whatsappMessage,
+    agent: {
+      id: agent.id,
+      full_name: agent.full_name,
+      phone: agent.phone,
+      email: agent.email
     }
   });
 });

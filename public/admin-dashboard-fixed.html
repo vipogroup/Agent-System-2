@@ -296,17 +296,20 @@
                                                 style="background: #007bff; margin-left: 5px;" title="כניסה לדשבורד הסוכן">
                                             👤 דשבורד
                                         </button>
+                                        <button class="btn-sm" onclick="resetAgentPassword(${agent.id}, '${agent.full_name || 'Unknown'}', '${agent.phone || ''}')" 
+                                                style="background: #ff9500; color: white; margin-left: 5px;" title="איפוס סיסמה">
+                                            🔄 איפוס סיסמה
+                                        </button>
                                         <button class="btn-sm ${agent.is_active ? 'btn-warning' : 'btn-success'}" 
                                                 onclick="toggleAgent(${agent.id}, ${agent.is_active})">
                                             ${agent.is_active ? '🚫 חסום' : '✅ הפעל'}
                                         </button>
-                                        <button class="btn-sm btn-danger" onclick="deleteAgent(${agent.id}, '${agent.email}')">
+                                        <button class="btn-sm btn-danger" onclick="deleteAgent(${agent.id})">
                                             🗑️ מחק
                                         </button>
                                     ` : '<span style="color: #666;">מנהל מערכת</span>'}
                                 </td>
-                            </tr>
-                        `).join('')}
+                            </tr>`).join('')}
                     </tbody>
                 </table>
             `;
@@ -400,6 +403,49 @@
             } catch (error) {
                 console.error('Error opening agent dashboard:', error);
                 alert('שגיאה בחיבור לשרת');
+            }
+        }
+        
+        // Reset agent password function
+        async function resetAgentPassword(agentId, agentName, agentPhone) {
+            if (!confirm(`האם אתה בטוח שברצונך לאפס את הסיסמה של ${agentName}?`)) {
+                return;
+            }
+            
+            try {
+                console.log('Resetting password for agent:', agentId, agentName, agentPhone);
+                
+                const response = await fetch(`/api/agent/${agentId}/reset-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('Password reset result:', result);
+                    
+                    // Show success message with temp password (for development)
+                    const message = `✅ הסיסמה אופסה בהצלחה!
+                    
+🔑 הסיסמה הזמנית: ${result.tempPassword}
+
+📱 הודעת וואטסאפ נשלחה ל: ${agentPhone}
+
+💡 הסוכן יכול להתחבר עם הסיסמה החדשה.`;
+                    
+                    alert(message);
+                    
+                    // Refresh the agents list
+                    loadData();
+                } else {
+                    const error = await response.json();
+                    alert(`שגיאה באיפוס הסיסמה: ${error.error || 'שגיאה לא ידועה'}`);
+                }
+            } catch (error) {
+                console.error('Error resetting password:', error);
+                alert('שגיאה בחיבור לשרת. נסה שוב מאוחר יותר.');
             }
         }
         
