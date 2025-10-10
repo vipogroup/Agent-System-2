@@ -14,32 +14,53 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 // Persistent storage functions
+// Note: In production (Render), use environment variables for persistence
 const DATA_DIR = path.join(__dirname, 'data');
 const AGENTS_FILE = path.join(DATA_DIR, 'agents.json');
 const SALES_FILE = path.join(DATA_DIR, 'sales.json');
+
+// Environment-based storage for production
+const AGENTS_ENV_KEY = 'AGENTS_DATA';
+const SALES_ENV_KEY = 'SALES_DATA';
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// Load data from files
+// Load data from files or environment
 function loadAgents() {
   try {
+    // Try environment variable first (for production)
+    if (process.env[AGENTS_ENV_KEY]) {
+      console.log('Loading agents from environment variable');
+      return JSON.parse(process.env[AGENTS_ENV_KEY]);
+    }
+    
+    // Fallback to file system (for development)
     if (fs.existsSync(AGENTS_FILE)) {
+      console.log('Loading agents from file system');
       const data = fs.readFileSync(AGENTS_FILE, 'utf8');
       return JSON.parse(data);
     }
   } catch (error) {
     console.error('Error loading agents:', error);
   }
+  
+  console.log('Using default agents');
   return getDefaultAgents();
 }
 
 function saveAgents(agents) {
   try {
+    // Save to file system (for development)
     fs.writeFileSync(AGENTS_FILE, JSON.stringify(agents, null, 2));
     console.log('Agents saved to file');
+    
+    // Also save to environment variable (for production persistence)
+    // Note: This won't persist across deployments in Render, but helps with restarts
+    process.env[AGENTS_ENV_KEY] = JSON.stringify(agents);
+    console.log('Agents saved to environment');
   } catch (error) {
     console.error('Error saving agents:', error);
   }
@@ -47,20 +68,35 @@ function saveAgents(agents) {
 
 function loadSales() {
   try {
+    // Try environment variable first (for production)
+    if (process.env[SALES_ENV_KEY]) {
+      console.log('Loading sales from environment variable');
+      return JSON.parse(process.env[SALES_ENV_KEY]);
+    }
+    
+    // Fallback to file system (for development)
     if (fs.existsSync(SALES_FILE)) {
+      console.log('Loading sales from file system');
       const data = fs.readFileSync(SALES_FILE, 'utf8');
       return JSON.parse(data);
     }
   } catch (error) {
     console.error('Error loading sales:', error);
   }
+  
+  console.log('Using empty sales array');
   return [];
 }
 
 function saveSales(sales) {
   try {
+    // Save to file system (for development)
     fs.writeFileSync(SALES_FILE, JSON.stringify(sales, null, 2));
     console.log('Sales saved to file');
+    
+    // Also save to environment variable (for production persistence)
+    process.env[SALES_ENV_KEY] = JSON.stringify(sales);
+    console.log('Sales saved to environment');
   } catch (error) {
     console.error('Error saving sales:', error);
   }
@@ -116,6 +152,13 @@ let agents = loadAgents();
 let sales = loadSales();
 
 console.log(`📊 Data loaded: ${agents.length} agents, ${sales.length} sales`);
+
+// Warning about data persistence in production
+if (process.env.NODE_ENV === 'production' || process.env.PORT) {
+  console.log('⚠️  PRODUCTION WARNING: Data may be lost on deployment updates!');
+  console.log('💾 Use /api/admin/backup before updates and /api/admin/restore after');
+  console.log('🔗 Backup URL: https://agent-system-2.onrender.com/api/admin/backup');
+}
 
 let payoutRequests = [
   {
@@ -790,6 +833,63 @@ app.get('/admin', (req, res) => {
 
 // Serve static files for public directory
 app.use('/public', express.static(path.join(__dirname, 'public')));
+
+// Data backup and restore endpoints (for deployment persistence)
+app.get('/api/admin/backup', (req, res) => {
+  console.log('Creating data backup...');
+  
+  const backup = {
+    agents: agents,
+    sales: sales,
+    timestamp: new Date().toISOString(),
+    version: '1.0'
+  };
+  
+  res.json({
+    success: true,
+    backup: backup,
+    message: 'Backup created successfully'
+  });
+});
+
+app.post('/api/admin/restore', (req, res) => {
+  const { backup } = req.body;
+  
+  if (!backup || !backup.agents) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Invalid backup data' 
+    });
+  }
+  
+  try {
+    // Restore agents
+    agents.length = 0; // Clear current array
+    agents.push(...backup.agents);
+    saveAgents(agents);
+    
+    // Restore sales
+    if (backup.sales) {
+      sales.length = 0; // Clear current array
+      sales.push(...backup.sales);
+      saveSales(sales);
+    }
+    
+    console.log(`Data restored: ${agents.length} agents, ${sales.length} sales`);
+    
+    res.json({
+      success: true,
+      message: `Restored ${agents.length} agents and ${sales.length} sales`,
+      timestamp: backup.timestamp
+    });
+  } catch (error) {
+    console.error('Error restoring backup:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to restore backup'
+    });
+  }
+});
 
 // 404 handler
 app.use((req, res) => {
