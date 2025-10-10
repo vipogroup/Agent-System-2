@@ -382,28 +382,109 @@ ${process.env.NODE_ENV === 'production' ? 'https://agent-system-2.onrender.com' 
   });
 });
 
-// Agent registration endpoint (mock)
-app.post('/api/agents/register', (req, res) => {
-  const { email, password, full_name, phone, payment_details } = req.body;
+// Agent login endpoint
+app.post('/api/agents/login', (req, res) => {
+  const { email, password } = req.body;
   
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
   }
   
-  // Mock successful registration
-  const referralCode = 'DEMO' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  // Find agent by email
+  const agent = agents.find(a => a.email === email);
+  if (!agent) {
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
+  
+  // Check if agent is active
+  if (!agent.is_active) {
+    return res.status(403).json({ error: 'Account is blocked. Contact administrator.' });
+  }
+  
+  // Verify password
+  const isPasswordValid = bcrypt.compareSync(password, agent.password);
+  if (!isPasswordValid) {
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
+  
+  console.log(`Agent login successful: ${agent.full_name} (${agent.email})`);
+  
+  // Generate JWT token (simplified for demo)
+  const token = 'JWT_' + Math.random().toString(36).substring(2, 15);
+  
+  res.json({
+    success: true,
+    message: 'Login successful',
+    token: token,
+    agent: {
+      id: agent.id,
+      email: agent.email,
+      full_name: agent.full_name,
+      phone: agent.phone,
+      referral_code: agent.referral_code,
+      visits: agent.visits || 0,
+      sales: agent.sales || 0,
+      totalCommissions: agent.totalCommissions || 0,
+      is_active: agent.is_active
+    }
+  });
+});
+
+// Agent registration endpoint (real)
+app.post('/api/agents/register', (req, res) => {
+  const { email, password, full_name, phone, payment_details } = req.body;
+  
+  if (!email || !password || !full_name) {
+    return res.status(400).json({ error: 'Email, password and full name are required' });
+  }
+  
+  // Check if agent already exists
+  const existingAgent = agents.find(a => a.email === email);
+  if (existingAgent) {
+    return res.status(409).json({ error: 'Agent with this email already exists' });
+  }
+  
+  // Hash password
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  
+  // Generate referral code
+  const referralCode = 'AG' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  
+  // Create new agent
+  const newAgent = {
+    id: agents.length + 1,
+    email: email,
+    password: hashedPassword,
+    full_name: full_name,
+    phone: phone || '',
+    payment_details: payment_details || '',
+    referral_code: referralCode,
+    is_active: true,
+    role: 'agent',
+    visits: 0,
+    sales: 0,
+    totalCommissions: 0,
+    created_at: new Date().toISOString()
+  };
+  
+  // Add to agents array
+  agents.push(newAgent);
+  
+  console.log(`New agent registered: ${full_name} (${email}) with code ${referralCode}`);
   
   res.json({
     success: true,
     message: 'Agent registered successfully',
     agent: {
-      id: Date.now(),
-      email,
-      full_name: full_name || null,
-      referral_code: referralCode,
-      role: 'agent'
+      id: newAgent.id,
+      email: newAgent.email,
+      full_name: newAgent.full_name,
+      phone: newAgent.phone,
+      referral_code: newAgent.referral_code,
+      role: newAgent.role,
+      is_active: newAgent.is_active
     },
-    token: 'mock-jwt-token'
+    token: 'JWT_' + Math.random().toString(36).substring(2, 15)
   });
 });
 
