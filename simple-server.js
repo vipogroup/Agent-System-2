@@ -18,6 +18,8 @@ let agents = [
     id: 1,
     full_name: 'יוסי כהן',
     email: 'yossi@example.com',
+    password: bcrypt.hashSync('123456', 10), // Default password: 123456
+    phone: '0501234567',
     referral_code: 'YOSSI2024',
     is_active: true,
     role: 'agent',
@@ -30,6 +32,8 @@ let agents = [
     id: 2,
     full_name: 'שרה לוי',
     email: 'sara@example.com',
+    password: bcrypt.hashSync('123456', 10), // Default password: 123456
+    phone: '0502345678',
     referral_code: 'SARA2024',
     is_active: true,
     role: 'agent',
@@ -42,6 +46,8 @@ let agents = [
     id: 3,
     full_name: 'דוד אברהם',
     email: 'david@example.com',
+    password: bcrypt.hashSync('123456', 10), // Default password: 123456
+    phone: '0503456789',
     referral_code: 'DAVID2024',
     is_active: false,
     role: 'agent',
