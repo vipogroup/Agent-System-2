@@ -310,6 +310,9 @@
                     localStorage.setItem('agentReferralCode', result.agent.referral_code);
                     localStorage.setItem('authToken', result.token);
                     
+                    // Save complete agent data for dashboard
+                    localStorage.setItem('currentAgent', JSON.stringify(result.agent));
+                    
                     // Redirect to agent dashboard
                     setTimeout(() => {
                         window.location.href = 'agent-dashboard.html';
@@ -341,6 +344,9 @@
                     localStorage.setItem('agentName', foundAgent.full_name);
                     localStorage.setItem('agentId', foundAgent.id);
                     localStorage.setItem('agentReferralCode', foundAgent.referral_code);
+                    
+                    // Save complete agent data for dashboard
+                    localStorage.setItem('currentAgent', JSON.stringify(foundAgent));
                     
                     // Redirect to agent dashboard
                     setTimeout(() => {
