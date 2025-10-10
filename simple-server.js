@@ -4,6 +4,16 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 import fs from 'fs';
+import { 
+  connectDB, 
+  getAgents as getAgentsFromDB, 
+  saveAllAgents as saveAgentsToDB,
+  getSales as getSalesFromDB,
+  saveAllSales as saveSalesToDB,
+  saveSale as saveSaleToDB,
+  saveAgent as saveAgentToDB,
+  checkDBHealth 
+} from './database.js';
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -27,75 +37,113 @@ if (!fs.existsSync(DATA_DIR)) {
 const ENV_AGENTS_KEY = 'AGENTS_DATA';
 const ENV_SALES_KEY = 'SALES_DATA';
 
-// Load data from files or environment variables
-function loadAgents() {
+// Load data with priority: MongoDB -> Environment Variables -> File System -> Default
+async function loadAgents() {
   try {
-    // First try to load from environment variable (persistent across deployments)
+    // First try MongoDB
+    const dbAgents = await getAgentsFromDB();
+    if (dbAgents && dbAgents.length > 0) {
+      console.log('✅ Loading agents from MongoDB');
+      return dbAgents;
+    }
+    
+    // Fallback to environment variable
     if (process.env[ENV_AGENTS_KEY]) {
-      console.log('Loading agents from environment variable');
-      return JSON.parse(process.env[ENV_AGENTS_KEY]);
+      console.log('📝 Loading agents from environment variable');
+      const envAgents = JSON.parse(process.env[ENV_AGENTS_KEY]);
+      // Save to MongoDB for future use
+      await saveAgentsToDB(envAgents);
+      return envAgents;
     }
     
     // Fallback to file system
     if (fs.existsSync(AGENTS_FILE)) {
-      console.log('Loading agents from file system');
+      console.log('📁 Loading agents from file system');
       const data = fs.readFileSync(AGENTS_FILE, 'utf8');
-      return JSON.parse(data);
+      const fileAgents = JSON.parse(data);
+      // Save to MongoDB for future use
+      await saveAgentsToDB(fileAgents);
+      return fileAgents;
     }
   } catch (error) {
     console.error('Error loading agents:', error);
   }
   
-  console.log('Loading default agents');
-  return getDefaultAgents();
+  console.log('🔄 Loading default agents');
+  const defaultAgents = getDefaultAgents();
+  // Save defaults to MongoDB
+  await saveAgentsToDB(defaultAgents);
+  return defaultAgents;
 }
 
-function saveAgents(agents) {
+async function saveAgents(agents) {
   try {
-    // Save to file system
-    fs.writeFileSync(AGENTS_FILE, JSON.stringify(agents, null, 2));
-    console.log('Agents saved to file');
+    // Primary: Save to MongoDB
+    const mongoSaved = await saveAgentsToDB(agents);
+    if (mongoSaved) {
+      console.log('✅ Agents saved to MongoDB');
+    }
     
-    // Also save to environment variable for persistence across deployments
-    // Note: This won't work in Render without manual env var setting
-    console.log('Agents data ready for environment variable backup');
-    console.log('AGENTS_DATA should be set to:', JSON.stringify(agents));
+    // Backup: Save to file system
+    fs.writeFileSync(AGENTS_FILE, JSON.stringify(agents, null, 2));
+    console.log('📁 Agents saved to file system');
+    
+    // Log for manual environment variable backup
+    console.log('📝 Agents data for env backup:', JSON.stringify(agents));
   } catch (error) {
     console.error('Error saving agents:', error);
   }
 }
 
-function loadSales() {
+async function loadSales() {
   try {
-    // First try to load from environment variable
+    // First try MongoDB
+    const dbSales = await getSalesFromDB();
+    if (dbSales && dbSales.length >= 0) {
+      console.log('✅ Loading sales from MongoDB');
+      return dbSales;
+    }
+    
+    // Fallback to environment variable
     if (process.env[ENV_SALES_KEY]) {
-      console.log('Loading sales from environment variable');
-      return JSON.parse(process.env[ENV_SALES_KEY]);
+      console.log('📝 Loading sales from environment variable');
+      const envSales = JSON.parse(process.env[ENV_SALES_KEY]);
+      await saveSalesToDB(envSales);
+      return envSales;
     }
     
     // Fallback to file system
     if (fs.existsSync(SALES_FILE)) {
-      console.log('Loading sales from file system');
+      console.log('📁 Loading sales from file system');
       const data = fs.readFileSync(SALES_FILE, 'utf8');
-      return JSON.parse(data);
+      const fileSales = JSON.parse(data);
+      await saveSalesToDB(fileSales);
+      return fileSales;
     }
   } catch (error) {
     console.error('Error loading sales:', error);
   }
   
-  console.log('Loading empty sales array');
-  return [];
+  console.log('🔄 Loading empty sales array');
+  const emptySales = [];
+  await saveSalesToDB(emptySales);
+  return emptySales;
 }
 
-function saveSales(sales) {
+async function saveSales(sales) {
   try {
-    // Save to file system
-    fs.writeFileSync(SALES_FILE, JSON.stringify(sales, null, 2));
-    console.log('Sales saved to file');
+    // Primary: Save to MongoDB
+    const mongoSaved = await saveSalesToDB(sales);
+    if (mongoSaved) {
+      console.log('✅ Sales saved to MongoDB');
+    }
     
-    // Also prepare for environment variable backup
-    console.log('Sales data ready for environment variable backup');
-    console.log('SALES_DATA should be set to:', JSON.stringify(sales));
+    // Backup: Save to file system
+    fs.writeFileSync(SALES_FILE, JSON.stringify(sales, null, 2));
+    console.log('📁 Sales saved to file system');
+    
+    // Log for manual environment variable backup
+    console.log('📝 Sales data for env backup:', JSON.stringify(sales));
   } catch (error) {
     console.error('Error saving sales:', error);
   }
@@ -146,11 +194,26 @@ function getDefaultAgents() {
   ];
 }
 
-// Initialize data from files
-let agents = loadAgents();
-let sales = loadSales();
+// Initialize data from database/files (async)
+let agents = [];
+let sales = [];
 
-console.log(`📊 Data loaded: ${agents.length} agents, ${sales.length} sales`);
+// Initialize data asynchronously
+async function initializeData() {
+  try {
+    console.log('🔄 Initializing data...');
+    agents = await loadAgents();
+    sales = await loadSales();
+    console.log(`📊 Data loaded: ${agents.length} agents, ${sales.length} sales`);
+  } catch (error) {
+    console.error('Error initializing data:', error);
+    agents = getDefaultAgents();
+    sales = [];
+  }
+}
+
+// Call initialization
+initializeData();
 
 let payoutRequests = [
   {
@@ -198,11 +261,20 @@ app.get('/agent-dashboard.html', (req, res) => {
 });
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', async (req, res) => {
+  const dbHealth = await checkDBHealth();
   res.json({ 
     ok: true, 
     message: 'Agent System is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    database: {
+      connected: dbHealth,
+      type: dbHealth ? 'MongoDB' : 'File System'
+    },
+    stats: {
+      agents: agents.length,
+      sales: sales.length
+    }
   });
 });
 
