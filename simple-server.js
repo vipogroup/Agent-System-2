@@ -14,6 +14,16 @@ import {
   saveAgent as saveAgentToDB,
   checkDBHealth 
 } from './database.js';
+import {
+  initPostgres,
+  getAgentsFromPostgres,
+  saveAgentToPostgres,
+  saveAllAgentsToPostgres,
+  getSalesFromPostgres,
+  saveSaleToPostgres,
+  saveAllSalesToPostgres,
+  checkPostgresHealth
+} from './postgres.js';
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -37,13 +47,22 @@ if (!fs.existsSync(DATA_DIR)) {
 const ENV_AGENTS_KEY = 'AGENTS_DATA';
 const ENV_SALES_KEY = 'SALES_DATA';
 
-// Load data with priority: MongoDB -> Environment Variables -> File System -> Default
+// Load data with priority: PostgreSQL -> MongoDB -> Environment Variables -> File System -> Default
 async function loadAgents() {
   try {
-    // First try MongoDB
+    // First try PostgreSQL (highest priority)
+    const pgAgents = await getAgentsFromPostgres();
+    if (pgAgents && pgAgents.length > 0) {
+      console.log('🐘 Loading agents from PostgreSQL');
+      return pgAgents;
+    }
+    
+    // Fallback to MongoDB
     const dbAgents = await getAgentsFromDB();
     if (dbAgents && dbAgents.length > 0) {
-      console.log('✅ Loading agents from MongoDB');
+      console.log('🍃 Loading agents from MongoDB');
+      // Migrate to PostgreSQL for future use
+      await saveAllAgentsToPostgres(dbAgents);
       return dbAgents;
     }
     
@@ -51,7 +70,8 @@ async function loadAgents() {
     if (process.env[ENV_AGENTS_KEY]) {
       console.log('📝 Loading agents from environment variable');
       const envAgents = JSON.parse(process.env[ENV_AGENTS_KEY]);
-      // Save to MongoDB for future use
+      // Save to PostgreSQL for future use
+      await saveAllAgentsToPostgres(envAgents);
       await saveAgentsToDB(envAgents);
       return envAgents;
     }
@@ -61,7 +81,8 @@ async function loadAgents() {
       console.log('📁 Loading agents from file system');
       const data = fs.readFileSync(AGENTS_FILE, 'utf8');
       const fileAgents = JSON.parse(data);
-      // Save to MongoDB for future use
+      // Save to PostgreSQL for future use
+      await saveAllAgentsToPostgres(fileAgents);
       await saveAgentsToDB(fileAgents);
       return fileAgents;
     }
@@ -71,17 +92,24 @@ async function loadAgents() {
   
   console.log('🔄 Loading default agents');
   const defaultAgents = getDefaultAgents();
-  // Save defaults to MongoDB
+  // Save defaults to PostgreSQL
+  await saveAllAgentsToPostgres(defaultAgents);
   await saveAgentsToDB(defaultAgents);
   return defaultAgents;
 }
 
 async function saveAgents(agents) {
   try {
-    // Primary: Save to MongoDB
+    // Primary: Save to PostgreSQL
+    const pgSaved = await saveAllAgentsToPostgres(agents);
+    if (pgSaved) {
+      console.log('🐘 Agents saved to PostgreSQL');
+    }
+    
+    // Secondary: Save to MongoDB
     const mongoSaved = await saveAgentsToDB(agents);
     if (mongoSaved) {
-      console.log('✅ Agents saved to MongoDB');
+      console.log('🍃 Agents saved to MongoDB');
     }
     
     // Backup: Save to file system
@@ -97,10 +125,19 @@ async function saveAgents(agents) {
 
 async function loadSales() {
   try {
-    // First try MongoDB
+    // First try PostgreSQL
+    const pgSales = await getSalesFromPostgres();
+    if (pgSales && pgSales.length >= 0) {
+      console.log('🐘 Loading sales from PostgreSQL');
+      return pgSales;
+    }
+    
+    // Fallback to MongoDB
     const dbSales = await getSalesFromDB();
     if (dbSales && dbSales.length >= 0) {
-      console.log('✅ Loading sales from MongoDB');
+      console.log('🍃 Loading sales from MongoDB');
+      // Migrate to PostgreSQL
+      await saveAllSalesToPostgres(dbSales);
       return dbSales;
     }
     
@@ -108,6 +145,7 @@ async function loadSales() {
     if (process.env[ENV_SALES_KEY]) {
       console.log('📝 Loading sales from environment variable');
       const envSales = JSON.parse(process.env[ENV_SALES_KEY]);
+      await saveAllSalesToPostgres(envSales);
       await saveSalesToDB(envSales);
       return envSales;
     }
@@ -117,6 +155,7 @@ async function loadSales() {
       console.log('📁 Loading sales from file system');
       const data = fs.readFileSync(SALES_FILE, 'utf8');
       const fileSales = JSON.parse(data);
+      await saveAllSalesToPostgres(fileSales);
       await saveSalesToDB(fileSales);
       return fileSales;
     }
@@ -126,16 +165,23 @@ async function loadSales() {
   
   console.log('🔄 Loading empty sales array');
   const emptySales = [];
+  await saveAllSalesToPostgres(emptySales);
   await saveSalesToDB(emptySales);
   return emptySales;
 }
 
 async function saveSales(sales) {
   try {
-    // Primary: Save to MongoDB
+    // Primary: Save to PostgreSQL
+    const pgSaved = await saveAllSalesToPostgres(sales);
+    if (pgSaved) {
+      console.log('🐘 Sales saved to PostgreSQL');
+    }
+    
+    // Secondary: Save to MongoDB
     const mongoSaved = await saveSalesToDB(sales);
     if (mongoSaved) {
-      console.log('✅ Sales saved to MongoDB');
+      console.log('🍃 Sales saved to MongoDB');
     }
     
     // Backup: Save to file system
@@ -201,12 +247,26 @@ let sales = [];
 // Initialize data asynchronously
 async function initializeData() {
   try {
-    console.log('🔄 Initializing data...');
+    console.log('🔄 Initializing system...');
+    
+    // Initialize PostgreSQL connection
+    const pgConnected = await initPostgres();
+    if (pgConnected) {
+      console.log('🐘 PostgreSQL initialized successfully');
+    } else {
+      console.log('⚠️ PostgreSQL not available, using fallback storage');
+    }
+    
+    // Initialize MongoDB connection
+    await connectDB();
+    
+    // Load data
+    console.log('📊 Loading data...');
     agents = await loadAgents();
     sales = await loadSales();
-    console.log(`📊 Data loaded: ${agents.length} agents, ${sales.length} sales`);
+    console.log(`✅ Data loaded: ${agents.length} agents, ${sales.length} sales`);
   } catch (error) {
-    console.error('Error initializing data:', error);
+    console.error('❌ Error initializing data:', error);
     agents = getDefaultAgents();
     sales = [];
   }
@@ -262,14 +322,27 @@ app.get('/agent-dashboard.html', (req, res) => {
 
 // Health check
 app.get('/health', async (req, res) => {
-  const dbHealth = await checkDBHealth();
+  const pgHealth = await checkPostgresHealth();
+  const mongoHealth = await checkDBHealth();
+  
+  let dbType = 'File System';
+  if (pgHealth) dbType = 'PostgreSQL';
+  else if (mongoHealth) dbType = 'MongoDB';
+  
   res.json({ 
     ok: true, 
     message: 'Agent System is running',
     timestamp: new Date().toISOString(),
     database: {
-      connected: dbHealth,
-      type: dbHealth ? 'MongoDB' : 'File System'
+      primary: {
+        type: 'PostgreSQL',
+        connected: pgHealth
+      },
+      secondary: {
+        type: 'MongoDB', 
+        connected: mongoHealth
+      },
+      active_type: dbType
     },
     stats: {
       agents: agents.length,
