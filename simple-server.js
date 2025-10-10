@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
@@ -25,13 +27,46 @@ import {
   checkPostgresHealth
 } from './postgres.js';
 
+// 🛡️ Import Security Middlewares
+import {
+  corsOptions,
+  generalLimiter,
+  loginLimiter,
+  helmetConfig,
+  securityLogger,
+  additionalSecurityHeaders
+} from './middlewares/security.js';
+
+import {
+  createToken,
+  setTokenCookie,
+  clearTokenCookie,
+  authenticate,
+  authorize,
+  refreshToken
+} from './middlewares/auth.js';
+
+import {
+  logUserAction,
+  logSecurityEvent,
+  getAuditLogs,
+  getSecurityLogs,
+  getLogStats
+} from './services/auditLogger.js';
+
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Basic middleware
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
+// 🛡️ Security Middlewares (ORDER MATTERS!)
+app.use(helmet(helmetConfig));           // Security headers
+app.use(additionalSecurityHeaders);      // Additional security headers
+app.use(cors(corsOptions));              // CORS protection
+app.use(generalLimiter);                 // Rate limiting
+app.use(securityLogger);                 // Security logging
+app.use(cookieParser());                 // Cookie parsing
+app.use(express.json({ limit: '10mb' })); // JSON parsing with size limit
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); // URL encoding
 
 // Persistent storage using environment variables as backup
 const DATA_DIR = path.join(__dirname, 'data');
@@ -331,8 +366,14 @@ app.get('/health', async (req, res) => {
   
   res.json({ 
     ok: true, 
-    message: 'Agent System is running',
+    message: 'Agent System is running - SECURED',
     timestamp: new Date().toISOString(),
+    security: {
+      cors: 'ENABLED',
+      rateLimit: 'ENABLED',
+      helmet: 'ENABLED',
+      auditLogging: 'ENABLED'
+    },
     database: {
       primary: {
         type: 'PostgreSQL',
@@ -349,6 +390,82 @@ app.get('/health', async (req, res) => {
       sales: sales.length
     }
   });
+});
+
+// 📊 Security & Audit Endpoints - ADMIN ONLY
+app.get('/api/admin/logs/audit', authenticate, authorize(['admin']), async (req, res) => {
+  try {
+    const { limit = 50, userId, action, status } = req.query;
+    const filter = {};
+    if (userId) filter.userId = userId;
+    if (action) filter.action = action;
+    if (status) filter.status = status;
+    
+    const logs = await getAuditLogs(parseInt(limit), filter);
+    
+    await logUserAction(req.user.id, 'VIEW_AUDIT_LOGS', 'SUCCESS', req, { 
+      filter, 
+      resultsCount: logs.length 
+    });
+    
+    res.json({
+      success: true,
+      logs: logs,
+      total: logs.length
+    });
+    
+  } catch (error) {
+    console.error('❌ Get audit logs error:', error);
+    res.status(500).json({ 
+      error: 'שגיאת שרת פנימית',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+});
+
+app.get('/api/admin/logs/security', authenticate, authorize(['admin']), async (req, res) => {
+  try {
+    const { limit = 50, severity } = req.query;
+    const logs = await getSecurityLogs(parseInt(limit), severity);
+    
+    await logUserAction(req.user.id, 'VIEW_SECURITY_LOGS', 'SUCCESS', req, { 
+      severity, 
+      resultsCount: logs.length 
+    });
+    
+    res.json({
+      success: true,
+      logs: logs,
+      total: logs.length
+    });
+    
+  } catch (error) {
+    console.error('❌ Get security logs error:', error);
+    res.status(500).json({ 
+      error: 'שגיאת שרת פנימית',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+});
+
+app.get('/api/admin/logs/stats', authenticate, authorize(['admin']), async (req, res) => {
+  try {
+    const stats = await getLogStats();
+    
+    await logUserAction(req.user.id, 'VIEW_LOG_STATS', 'SUCCESS', req);
+    
+    res.json({
+      success: true,
+      stats: stats
+    });
+    
+  } catch (error) {
+    console.error('❌ Get log stats error:', error);
+    res.status(500).json({ 
+      error: 'שגיאת שרת פנימית',
+      code: 'INTERNAL_ERROR'
+    });
+  }
 });
 
 // Simple API endpoints for demo
@@ -631,52 +748,190 @@ ${process.env.NODE_ENV === 'production' ? 'https://agent-system-2.onrender.com' 
   });
 });
 
-// Agent login endpoint
-app.post('/api/agents/login', (req, res) => {
+// 🔐 Agent login endpoint - SECURED
+app.post('/api/agents/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
-  }
-  
-  // Find agent by email
-  const agent = agents.find(a => a.email === email);
-  if (!agent) {
-    return res.status(401).json({ error: 'Invalid email or password' });
-  }
-  
-  // Check if agent is active
-  if (!agent.is_active) {
-    return res.status(403).json({ error: 'Account is blocked. Contact administrator.' });
-  }
-  
-  // Verify password
-  const isPasswordValid = bcrypt.compareSync(password, agent.password);
-  if (!isPasswordValid) {
-    return res.status(401).json({ error: 'Invalid email or password' });
-  }
-  
-  console.log(`Agent login successful: ${agent.full_name} (${agent.email})`);
-  
-  // Generate JWT token (simplified for demo)
-  const token = 'JWT_' + Math.random().toString(36).substring(2, 15);
-  
-  res.json({
-    success: true,
-    message: 'Login successful',
-    token: token,
-    agent: {
-      id: agent.id,
-      email: agent.email,
-      full_name: agent.full_name,
-      phone: agent.phone,
-      referral_code: agent.referral_code,
-      visits: agent.visits || 0,
-      sales: agent.sales || 0,
-      totalCommissions: agent.totalCommissions || 0,
-      is_active: agent.is_active
+  try {
+    // Input validation
+    if (!email || !password) {
+      await logSecurityEvent('INVALID_LOGIN_ATTEMPT', 'LOW', req, { 
+        reason: 'Missing email or password' 
+      });
+      return res.status(400).json({ 
+        error: 'נדרש להזין אימייל וסיסמה',
+        code: 'MISSING_CREDENTIALS'
+      });
     }
-  });
+    
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      await logSecurityEvent('INVALID_LOGIN_ATTEMPT', 'LOW', req, { 
+        reason: 'Invalid email format',
+        email: email
+      });
+      return res.status(400).json({ 
+        error: 'פורמט אימייל לא תקין',
+        code: 'INVALID_EMAIL_FORMAT'
+      });
+    }
+    
+    // Find agent by email
+    const agent = agents.find(a => a.email.toLowerCase() === email.toLowerCase());
+    if (!agent) {
+      await logUserAction(null, 'LOGIN_ATTEMPT', 'FAILED', req, { 
+        email: email,
+        reason: 'User not found'
+      });
+      await logSecurityEvent('FAILED_LOGIN_ATTEMPT', 'MEDIUM', req, { 
+        email: email,
+        reason: 'User not found'
+      });
+      return res.status(401).json({ 
+        error: 'אימייל או סיסמה לא נכונים',
+        code: 'INVALID_CREDENTIALS'
+      });
+    }
+    
+    // Check if agent is active
+    if (!agent.is_active) {
+      await logUserAction(agent.id, 'LOGIN_ATTEMPT', 'BLOCKED', req, { 
+        reason: 'Account inactive'
+      });
+      await logSecurityEvent('BLOCKED_LOGIN_ATTEMPT', 'HIGH', req, { 
+        userId: agent.id,
+        email: email,
+        reason: 'Account inactive'
+      });
+      return res.status(403).json({ 
+        error: 'החשבון חסום. פנה למנהל המערכת',
+        code: 'ACCOUNT_BLOCKED'
+      });
+    }
+    
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, agent.password);
+    if (!isPasswordValid) {
+      await logUserAction(agent.id, 'LOGIN_ATTEMPT', 'FAILED', req, { 
+        reason: 'Invalid password'
+      });
+      await logSecurityEvent('FAILED_LOGIN_ATTEMPT', 'MEDIUM', req, { 
+        userId: agent.id,
+        email: email,
+        reason: 'Invalid password'
+      });
+      return res.status(401).json({ 
+        error: 'אימייל או סיסמה לא נכונים',
+        code: 'INVALID_CREDENTIALS'
+      });
+    }
+    
+    // Update agent visits
+    agent.visits = (agent.visits || 0) + 1;
+    agent.last_login = new Date().toISOString();
+    await saveAgents(agents);
+    
+    // Generate secure JWT token
+    const token = createToken(agent);
+    
+    // Set secure cookie
+    setTokenCookie(res, token);
+    
+    // Log successful login
+    await logUserAction(agent.id, 'LOGIN', 'SUCCESS', req, { 
+      userAgent: req.headers['user-agent']
+    });
+    
+    console.log(`✅ Agent login successful: ${agent.full_name} (${agent.email}) from ${req.ip}`);
+    
+    // Return minimal user data (no sensitive info)
+    res.json({
+      success: true,
+      message: 'התחברות בוצעה בהצלחה',
+      user: {
+        id: agent.id,
+        email: agent.email,
+        fullName: agent.full_name,
+        referralCode: agent.referral_code,
+        role: agent.role || 'agent'
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Login error:', error);
+    await logSecurityEvent('LOGIN_ERROR', 'HIGH', req, { 
+      error: error.message
+    });
+    res.status(500).json({ 
+      error: 'שגיאת שרת פנימית',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+});
+
+// 🚪 Agent logout endpoint - SECURED
+app.post('/api/agents/logout', authenticate, async (req, res) => {
+  try {
+    // Log logout action
+    await logUserAction(req.user.id, 'LOGOUT', 'SUCCESS', req);
+    
+    // Clear the authentication cookie
+    clearTokenCookie(res);
+    
+    console.log(`🚪 Agent logout: ${req.user.email}`);
+    
+    res.json({
+      success: true,
+      message: 'התנתקות בוצעה בהצלחה'
+    });
+    
+  } catch (error) {
+    console.error('❌ Logout error:', error);
+    res.status(500).json({ 
+      error: 'שגיאת שרת פנימית',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+});
+
+// 👤 Get current user info - SECURED
+app.get('/api/user/me', authenticate, refreshToken, async (req, res) => {
+  try {
+    const agent = agents.find(a => a.id === req.user.id);
+    if (!agent) {
+      return res.status(404).json({ 
+        error: 'משתמש לא נמצא',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+    
+    await logUserAction(req.user.id, 'GET_PROFILE', 'SUCCESS', req);
+    
+    res.json({
+      success: true,
+      user: {
+        id: agent.id,
+        email: agent.email,
+        fullName: agent.full_name,
+        phone: agent.phone,
+        referralCode: agent.referral_code,
+        visits: agent.visits || 0,
+        sales: agent.sales || 0,
+        totalCommissions: agent.totalCommissions || 0,
+        isActive: agent.is_active,
+        role: agent.role || 'agent',
+        lastLogin: agent.last_login
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Get user error:', error);
+    res.status(500).json({ 
+      error: 'שגיאת שרת פנימית',
+      code: 'INTERNAL_ERROR'
+    });
+  }
 });
 
 // Agent registration endpoint (real)
