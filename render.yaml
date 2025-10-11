@@ -19,3 +19,16 @@ services:
         value: 14
       - key: COOKIE_TTL_DAYS
         value: 30
+      # WhatsApp Configuration - צריך להגדיר ב-Render Dashboard
+      - key: TWILIO_ACCOUNT_SID
+        sync: false  # יוגדר ידנית ב-Render
+      - key: TWILIO_AUTH_TOKEN
+        sync: false  # יוגדר ידנית ב-Render
+      - key: TWILIO_WHATSAPP_FROM
+        value: whatsapp:+14155238886
+      - key: DAILY_REPORT_TIME
+        value: "20:00"
+      - key: DAILY_REPORT_TIMEZONE
+        value: Asia/Jerusalem
+      - key: SITE_URL
+        value: https://agent-system-2.onrender.com
