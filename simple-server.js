@@ -31,6 +31,20 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 
+// 📱 WhatsApp Service
+import {
+  initWhatsAppService,
+  sendWhatsAppMessage,
+  generateSaleNotificationMessage,
+  generateDailyReportMessage,
+  sendDailyReports,
+  setupDailyReportCron,
+  getWhatsAppServiceStatus
+} from './whatsapp-service.js';
+
+// 📝 Logger
+import logger from './logger.js';
+
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key-change-in-production';
 
@@ -41,7 +55,9 @@ const corsOptions = {
       'https://agent-system-2.onrender.com',
       'http://localhost:3000',
       'http://localhost:8080',
-      'http://127.0.0.1:3000'
+      'http://localhost:10000',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:10000'
     ];
     
     if (!origin || allowedOrigins.includes(origin)) {
@@ -413,6 +429,41 @@ async function saveSales(sales) {
   }
 }
 
+// 📊 Get today's statistics for an agent
+function getAgentTodayStats(agentId) {
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  
+  // Get today's sales for this agent
+  const todaySales = sales.filter(sale => {
+    const saleDate = new Date(sale.created_at);
+    return sale.agent_id === agentId && saleDate >= todayStart;
+  });
+  
+  // Calculate today's commissions
+  const todayCommissions = todaySales.reduce((total, sale) => total + (sale.commission || 0), 0);
+  
+  // Note: We don't have visit tracking by date yet, so we'll use total visits
+  // In a real implementation, you'd want to track visits with timestamps
+  const agent = agents.find(a => a.id === agentId);
+  const todayVisits = agent ? (agent.todayVisits || 0) : 0;
+  
+  return {
+    visits: todayVisits,
+    sales: todaySales.length,
+    commissions: todayCommissions
+  };
+}
+
+// 📊 Reset daily visit counters (should be called at midnight)
+function resetDailyVisitCounters() {
+  agents.forEach(agent => {
+    agent.todayVisits = 0;
+  });
+  saveAgents(agents);
+  console.log('🔄 Daily visit counters reset');
+}
+
 // Default agents for first time setup
 function getDefaultAgents() {
   return [
@@ -700,7 +751,14 @@ app.post('/api/track-visit', (req, res) => {
   if (!agent.visits) agent.visits = 0;
   agent.visits += 1;
   
-  console.log(`Visit tracked for agent ${agent.full_name} (${agent.email}). Total visits: ${agent.visits}`);
+  // Update today's visit count
+  if (!agent.todayVisits) agent.todayVisits = 0;
+  agent.todayVisits += 1;
+  
+  // Save updated agent data
+  saveAgents(agents);
+  
+  console.log(`Visit tracked for agent ${agent.full_name} (${agent.email}). Total visits: ${agent.visits}, Today: ${agent.todayVisits}`);
   
   res.json({ 
     success: true, 
@@ -814,6 +872,35 @@ app.post('/api/agent/:id/sales', (req, res) => {
   saveAgents(agents); // Save updated agent stats
   
   console.log(`New sale recorded: Agent ${agent.full_name}, Amount: ₪${amount}, Commission: ₪${commission}`);
+  
+  // 📱 Send immediate WhatsApp notification to agent
+  if (agent.phone) {
+    try {
+      const whatsappMessage = generateSaleNotificationMessage(
+        agent, 
+        amount, 
+        commission, 
+        agent.referral_code
+      );
+      
+      // Send WhatsApp message asynchronously (don't wait for it)
+      sendWhatsAppMessage(agent.phone, whatsappMessage)
+        .then(result => {
+          if (result.success) {
+            console.log(`✅ Sale notification sent to ${agent.full_name} via ${result.service}`);
+          } else {
+            console.log(`⚠️ Failed to send sale notification to ${agent.full_name}: ${result.error}`);
+          }
+        })
+        .catch(error => {
+          console.error(`❌ Error sending sale notification to ${agent.full_name}:`, error);
+        });
+    } catch (error) {
+      console.error(`❌ Error generating sale notification for ${agent.full_name}:`, error);
+    }
+  } else {
+    console.log(`⚠️ No phone number for agent ${agent.full_name}, skipping WhatsApp notification`);
+  }
   
   res.json({
     success: true,
@@ -1451,8 +1538,142 @@ app.post('/api/backup/restore', (req, res) => {
   }
 });
 
-// Serve static files for public directory
-app.use('/public', express.static(path.join(__dirname, 'public')));
+// 📱 WhatsApp Service Endpoints
+
+// Get WhatsApp service status
+app.get('/api/whatsapp/status', (req, res) => {
+  const status = getWhatsAppServiceStatus();
+  res.json({
+    success: true,
+    whatsapp_service: status,
+    message: status.twilio.configured || status.businessAPI.configured 
+      ? 'WhatsApp service is configured' 
+      : 'WhatsApp service not configured'
+  });
+});
+
+// Send manual daily report to all agents
+app.post('/api/whatsapp/send-daily-reports', async (req, res) => {
+  try {
+    console.log('📊 Manual daily reports requested');
+    
+    const results = await sendDailyReports(agents, getAgentTodayStats);
+    
+    res.json({
+      success: true,
+      message: 'Daily reports sent',
+      results: results,
+      total_agents: results.length,
+      successful: results.filter(r => r.success).length,
+      failed: results.filter(r => !r.success).length
+    });
+  } catch (error) {
+    console.error('❌ Error sending daily reports:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send daily reports',
+      message: error.message
+    });
+  }
+});
+
+// Send test WhatsApp message
+app.post('/api/whatsapp/test', async (req, res) => {
+  try {
+    console.log('📱 WhatsApp test endpoint called');
+    console.log('Request body:', req.body);
+    console.log('Content-Type:', req.headers['content-type']);
+    
+    const { phone, message } = req.body;
+    
+    if (!phone || !message) {
+      return res.status(400).json({
+        success: false,
+        error: 'Phone and message are required'
+      });
+    }
+    
+    const result = await sendWhatsAppMessage(phone, message);
+    
+    res.json({
+      success: result.success,
+      message: result.success ? 'Test message sent' : 'Failed to send test message',
+      result: result
+    });
+  } catch (error) {
+    console.error('❌ Error sending test WhatsApp:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send test message',
+      message: error.message
+    });
+  }
+});
+
+// Reset daily visit counters (for testing or manual reset)
+app.post('/api/agents/reset-daily-visits', (req, res) => {
+  try {
+    resetDailyVisitCounters();
+    
+    res.json({
+      success: true,
+      message: 'Daily visit counters reset successfully',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Error resetting daily visits', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to reset daily visit counters',
+      message: error.message
+    });
+  }
+});
+
+// Get system logs
+app.get('/api/logs', (req, res) => {
+  try {
+    const lines = parseInt(req.query.lines) || 50;
+    const logs = logger.getRecentLogs(lines);
+    
+    res.json({
+      success: true,
+      logs: logs,
+      count: logs.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Error fetching logs', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch logs',
+      message: error.message
+    });
+  }
+});
+
+// Clear old logs
+app.post('/api/logs/clear', (req, res) => {
+  try {
+    const daysToKeep = parseInt(req.body.days) || 7;
+    logger.clearOldLogs(daysToKeep);
+    
+    res.json({
+      success: true,
+      message: `Old logs cleared (kept last ${daysToKeep} days)`,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Error clearing logs', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to clear logs',
+      message: error.message
+    });
+  }
+});
+
+// Static files already configured above
 
 // 404 handler
 app.use((req, res) => {
@@ -1475,4 +1696,49 @@ app.listen(PORT, '0.0.0.0', () => {
   }, 5 * 60 * 1000); // 5 minutes
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`💾 In-memory storage initialized with ${agents.length} agents`);
+  
+  // 📱 Initialize WhatsApp service
+  console.log('📱 Initializing WhatsApp service...');
+  const whatsappStatus = initWhatsAppService();
+  
+  if (whatsappStatus.available) {
+    console.log('✅ WhatsApp service initialized successfully');
+    
+    // 📅 Setup daily report cron job
+    try {
+      const cronJob = setupDailyReportCron(agents, getAgentTodayStats);
+      console.log('✅ Daily report cron job setup completed');
+      
+      // Setup midnight reset for daily counters
+      import('cron').then(({ CronJob }) => {
+        const midnightResetJob = new CronJob(
+          '0 0 * * *', // Every day at midnight
+          () => {
+            console.log('🌙 Midnight reset: Resetting daily visit counters');
+            resetDailyVisitCounters();
+          },
+          null,
+          true, // Start immediately
+          process.env.DAILY_REPORT_TIMEZONE || 'Asia/Jerusalem'
+        );
+        console.log('✅ Midnight reset cron job setup completed');
+      }).catch(error => {
+        console.error('❌ Error setting up midnight reset cron job:', error);
+      });
+      
+    } catch (error) {
+      console.error('❌ Error setting up cron jobs:', error);
+    }
+  } else {
+    console.log('⚠️ WhatsApp service not available - notifications will be logged only');
+    console.log('💡 To enable WhatsApp notifications, configure Twilio or WhatsApp Business API');
+  }
+  
+  // 📊 WhatsApp Service Status
+  console.log('📊 WhatsApp Service Status:');
+  console.log(`   📱 Available endpoints:`);
+  console.log(`   GET  /api/whatsapp/status - Check service status`);
+  console.log(`   POST /api/whatsapp/send-daily-reports - Send manual daily reports`);
+  console.log(`   POST /api/whatsapp/test - Send test message`);
+  console.log(`   POST /api/agents/reset-daily-visits - Reset daily visit counters`);
 });

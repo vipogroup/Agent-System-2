@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול WhatsApp - מערכת סוכנים</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            direction: rtl;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-right: 5px solid #4ecdc4;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .status-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .status-label {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .status-value {
+            color: #666;
+        }
+        
+        .status-good {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .status-bad {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #e83e8c);
+        }
+        
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4ecdc4;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .logs-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .logs-container {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 300px;
+            overflow-y: auto;
+            direction: ltr;
+            text-align: left;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .back-btn:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .back-btn {
+                position: static;
+                margin-bottom: 1rem;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="goBack()">← חזרה לדשבורד</button>
+    
+    <div class="container">
+        <div class="header">
+            <h1>📱 ניהול מערכת WhatsApp</h1>
+            <p>ניהול הודעות אוטומטיות לסוכנים</p>
+        </div>
+        
+        <div class="content">
+            <!-- Status Section -->
+            <div class="status-card">
+                <h2>📊 סטטוס המערכת</h2>
+                <div id="status-content">
+                    <div class="loading">טוען סטטוס...</div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-success" onclick="sendDailyReports()">
+                    📊 שלח דוחות יומיים לכל הסוכנים
+                </button>
+                <button class="btn btn-warning" onclick="resetDailyVisits()">
+                    🔄 איפוס מונה ביקורים יומי
+                </button>
+                <button class="btn" onclick="refreshStatus()">
+                    🔄 רענן סטטוס
+                </button>
+            </div>
+            
+            <!-- Test Message Section -->
+            <div class="test-section">
+                <h3>🧪 שליחת הודעת בדיקה</h3>
+                <div class="form-group">
+                    <label for="test-phone">מספר טלפון:</label>
+                    <input type="text" id="test-phone" placeholder="0587009938" value="0587009938">
+                </div>
+                <div class="form-group">
+                    <label for="test-message">הודעה:</label>
+                    <textarea id="test-message" placeholder="הכנס הודעת בדיקה...">בדיקת מערכת WhatsApp - הכל עובד מעולה! 🚀</textarea>
+                </div>
+                <button class="btn btn-success" onclick="sendTestMessage()">
+                    📱 שלח הודעת בדיקה
+                </button>
+            </div>
+            
+            <!-- Logs Section -->
+            <div class="logs-section">
+                <h3>📝 לוגים אחרונים</h3>
+                <div class="logs-container" id="logs-container">
+                    <div class="loading">טוען לוגים...</div>
+                </div>
+                <button class="btn" onclick="refreshLogs()" style="margin-top: 1rem;">
+                    🔄 רענן לוגים
+                </button>
+            </div>
+            
+            <!-- Alerts -->
+            <div id="success-alert" class="alert alert-success"></div>
+            <div id="error-alert" class="alert alert-danger"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let statusData = null;
+        let logs = [];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStatus();
+            refreshLogs();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(() => {
+                loadStatus();
+                refreshLogs();
+            }, 30000);
+        });
+
+        // Navigation
+        function goBack() {
+            // Go back to admin dashboard
+            window.location.href = '/public/admin-dashboard-fixed.html';
+        }
+
+        // Load WhatsApp status
+        async function loadStatus() {
+            try {
+                const response = await fetch('/api/whatsapp/status');
+                const data = await response.json();
+                statusData = data;
+                displayStatus(data);
+            } catch (error) {
+                console.error('Error loading status:', error);
+                showError('שגיאה בטעינת סטטוס המערכת');
+            }
+        }
+
+        // Display status
+        function displayStatus(data) {
+            const container = document.getElementById('status-content');
+            const service = data.whatsapp_service;
+            
+            let html = '';
+            
+            // Twilio status
+            html += `
+                <div class="status-item">
+                    <span class="status-label">📱 Twilio WhatsApp:</span>
+                    <span class="${service.twilio.configured ? 'status-good' : 'status-bad'}">
+                        ${service.twilio.configured ? '✅ מוגדר' : '❌ לא מוגדר'}
+                    </span>
+                </div>
+            `;
+            
+            // Business API status
+            html += `
+                <div class="status-item">
+                    <span class="status-label">🌐 WhatsApp Business API:</span>
+                    <span class="${service.businessAPI.configured ? 'status-good' : 'status-bad'}">
+                        ${service.businessAPI.configured ? '✅ מוגדר' : '❌ לא מוגדר'}
+                    </span>
+                </div>
+            `;
+            
+            // Daily reports settings
+            html += `
+                <div class="status-item">
+                    <span class="status-label">⏰ דוחות יומיים:</span>
+                    <span class="status-value">
+                        ${service.dailyReports.time} (${service.dailyReports.timezone})
+                    </span>
+                </div>
+            `;
+            
+            // Overall status
+            const isConfigured = service.twilio.configured || service.businessAPI.configured;
+            html += `
+                <div class="status-item">
+                    <span class="status-label">🚀 סטטוס כללי:</span>
+                    <span class="${isConfigured ? 'status-good' : 'status-bad'}">
+                        ${isConfigured ? '✅ פעיל' : '⚠️ לא מוגדר'}
+                    </span>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        // Send daily reports
+        async function sendDailyReports() {
+            try {
+                showLoading('שולח דוחות יומיים...');
+                
+                const response = await fetch('/api/whatsapp/send-daily-reports', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess(`דוחות יומיים נשלחו בהצלחה! (${data.successful}/${data.total_agents} הצליחו)`);
+                    addLog(`📊 Daily reports sent: ${data.successful}/${data.total_agents} successful`);
+                } else {
+                    showError('שגיאה בשליחת דוחות יומיים: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error sending daily reports:', error);
+                showError('שגיאה בשליחת דוחות יומיים');
+            }
+        }
+
+        // Reset daily visits
+        async function resetDailyVisits() {
+            try {
+                showLoading('מאפס מונה ביקורים...');
+                
+                const response = await fetch('/api/agents/reset-daily-visits', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('מונה הביקורים היומי אופס בהצלחה!');
+                    addLog('🔄 Daily visit counters reset');
+                } else {
+                    showError('שגיאה באיפוס מונה הביקורים: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error resetting daily visits:', error);
+                showError('שגיאה באיפוס מונה הביקורים');
+            }
+        }
+
+        // Send test message
+        async function sendTestMessage() {
+            const phone = document.getElementById('test-phone').value.trim();
+            const message = document.getElementById('test-message').value.trim();
+            
+            if (!phone || !message) {
+                showError('אנא מלא את כל השדות');
+                return;
+            }
+            
+            try {
+                showLoading('שולח הודעת בדיקה...');
+                
+                const response = await fetch('/api/whatsapp/test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        phone: phone,
+                        message: message
+                    })
+                });
+                
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    throw new Error(`Server returned non-JSON response: ${text.substring(0, 100)}...`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('הודעת הבדיקה נשלחה בהצלחה!');
+                    addLog(`📱 Test message sent to ${phone}`);
+                } else {
+                    showError('שגיאה בשליחת הודעת הבדיקה: ' + data.message);
+                    addLog(`❌ Test message failed: ${data.result?.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error sending test message:', error);
+                showError('שגיאה בשליחת הודעת הבדיקה');
+            }
+        }
+
+        // Refresh status
+        function refreshStatus() {
+            loadStatus();
+            showSuccess('סטטוס המערכת רוענן');
+        }
+
+        // Refresh logs
+        async function refreshLogs() {
+            try {
+                const response = await fetch('/api/logs?lines=20');
+                const data = await response.json();
+                
+                if (data.success) {
+                    logs = data.logs;
+                    displayLogs();
+                } else {
+                    console.error('Error fetching logs:', data.message);
+                    addLog(`❌ Error fetching logs: ${data.message}`);
+                }
+            } catch (error) {
+                console.error('Error fetching logs:', error);
+                addLog(`❌ Error fetching logs: ${error.message}`);
+            }
+        }
+
+        // Add log entry
+        function addLog(message) {
+            const timestamp = new Date().toLocaleString('he-IL');
+            logs.push(`[${timestamp}] ${message}`);
+            displayLogs();
+        }
+
+        // Display logs
+        function displayLogs() {
+            const container = document.getElementById('logs-container');
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="loading">אין לוגים זמינים</div>';
+                return;
+            }
+            
+            const logsHtml = logs.slice(-10).reverse().map(log => 
+                `<div>${log}</div>`
+            ).join('');
+            
+            container.innerHTML = logsHtml;
+            container.scrollTop = 0;
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const alert = document.getElementById('success-alert');
+            alert.textContent = message;
+            alert.style.display = 'block';
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+            
+            // Hide error alert
+            document.getElementById('error-alert').style.display = 'none';
+        }
+
+        // Show error message
+        function showError(message) {
+            const alert = document.getElementById('error-alert');
+            alert.textContent = message;
+            alert.style.display = 'block';
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+            
+            // Hide success alert
+            document.getElementById('success-alert').style.display = 'none';
+        }
+
+        // Show loading message
+        function showLoading(message) {
+            // You could implement a loading overlay here
+            console.log('Loading:', message);
+        }
+    </script>
+</body>
+</html>
