@@ -37,6 +37,7 @@ import {
   initWhatsAppService,
   sendWhatsAppMessage,
   generateSaleNotificationMessage,
+  generateWelcomeMessage,
   generateDailyReportMessage,
   sendDailyReports,
   setupDailyReportCron,
@@ -724,6 +725,30 @@ app.post('/api/agents/register', (req, res) => {
   
   console.log(`New agent registered: ${full_name} (${email}). Total agents: ${agents.length}`);
   
+  // 📱 Send welcome WhatsApp message to new agent
+  if (newAgent.phone) {
+    try {
+      const welcomeMessage = generateWelcomeMessage(newAgent);
+      
+      // Send WhatsApp message asynchronously (don't wait for it)
+      sendWhatsAppMessage(newAgent.phone, welcomeMessage)
+        .then(result => {
+          if (result.success) {
+            console.log(`✅ Welcome message sent to new agent ${newAgent.full_name} via ${result.service}`);
+          } else {
+            console.log(`⚠️ Failed to send welcome message to ${newAgent.full_name}: ${result.error}`);
+          }
+        })
+        .catch(error => {
+          console.error(`❌ Error sending welcome message to ${newAgent.full_name}:`, error);
+        });
+    } catch (error) {
+      console.error(`❌ Error generating welcome message for ${newAgent.full_name}:`, error);
+    }
+  } else {
+    console.log(`⚠️ No phone number for new agent ${newAgent.full_name}, skipping welcome WhatsApp message`);
+  }
+  
   res.json({
     success: true,
     agent: newAgent,
@@ -1300,6 +1325,30 @@ app.post('/api/agents/register', (req, res) => {
   saveAgents(agents); // Save to file
   
   console.log(`New agent registered: ${full_name} (${email}) with code ${referralCode}`);
+  
+  // 📱 Send welcome WhatsApp message to new agent
+  if (newAgent.phone) {
+    try {
+      const welcomeMessage = generateWelcomeMessage(newAgent);
+      
+      // Send WhatsApp message asynchronously (don't wait for it)
+      sendWhatsAppMessage(newAgent.phone, welcomeMessage)
+        .then(result => {
+          if (result.success) {
+            console.log(`✅ Welcome message sent to new agent ${newAgent.full_name} via ${result.service}`);
+          } else {
+            console.log(`⚠️ Failed to send welcome message to ${newAgent.full_name}: ${result.error}`);
+          }
+        })
+        .catch(error => {
+          console.error(`❌ Error sending welcome message to ${newAgent.full_name}:`, error);
+        });
+    } catch (error) {
+      console.error(`❌ Error generating welcome message for ${newAgent.full_name}:`, error);
+    }
+  } else {
+    console.log(`⚠️ No phone number for new agent ${newAgent.full_name}, skipping welcome WhatsApp message`);
+  }
   
   res.json({
     success: true,

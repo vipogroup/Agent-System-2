@@ -180,6 +180,44 @@ export function generateSaleNotificationMessage(agent, saleAmount, commission, r
 צוות המכירות 🎯`;
 }
 
+// 🎉 Generate welcome message for new agent
+export function generateWelcomeMessage(agent) {
+  const loginUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://agent-system-2.onrender.com/agent-login.html'
+    : 'http://localhost:10000/agent-login.html';
+    
+  const salesUrl = process.env.NODE_ENV === 'production'
+    ? `https://agent-system-2.onrender.com/vc/?ref=${agent.referral_code}`
+    : `http://localhost:10000/vc/?ref=${agent.referral_code}`;
+
+  return `🎉 ברוך הבא למערכת הסוכנים! 
+
+שלום ${agent.full_name}! 👋
+
+🎯 ההרשמה שלך הושלמה בהצלחה!
+
+📋 פרטי החשבון שלך:
+👤 שם: ${agent.full_name}
+📧 מייל: ${agent.email}
+🔗 קוד הפניה: ${agent.referral_code}
+
+🚀 איך להתחיל:
+1️⃣ היכנס לדשבורד שלך: ${loginUrl}
+2️⃣ שתף את קישור המכירות שלך: ${salesUrl}
+3️⃣ קבל 10% עמלה מכל מכירה!
+
+💡 טיפים להצלחה:
+• שתף את הקישור ברשתות החברתיות
+• ספר לחברים ומשפחה על המוצר
+• השתמש בכפתורי השיתוף בדשבורד
+
+📱 תמיכה: אם יש שאלות, פנה אלינו בכל עת!
+
+בהצלחה! 🚀💰
+
+צוות מערכת הסוכנים 🎯`;
+}
+
 // 📅 Send daily reports to all active agents
 export async function sendDailyReports(agents, getAgentTodayStats) {
   console.log('📊 Starting daily reports...');
