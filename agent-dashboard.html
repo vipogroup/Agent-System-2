@@ -444,7 +444,7 @@
                         const updatedAgent = { ...currentAgent, ...agentData.agent };
                         localStorage.setItem('currentAgent', JSON.stringify(updatedAgent));
                         updateStats(updatedAgent);
-                        console.log('Agent data updated from server:', updatedAgent);
+                        console.log('Agent data refreshed from server');
                     } else {
                         updateStats(currentAgent);
                     }
@@ -661,26 +661,32 @@
             
             loadAgentData();
             
-            // Auto refresh every 10 seconds to show updated visit counts
+            // Auto refresh every 30 seconds to show updated visit counts (reduced frequency)
             setInterval(async () => {
                 const currentAgent = JSON.parse(localStorage.getItem('currentAgent'));
                 if (currentAgent) {
                     try {
-                        const response = await fetch(`/api/agent/${currentAgent.id}`);
+                        const response = await fetch(`/api/agents/${currentAgent.id}`);
                         if (response.ok) {
                             const agentData = await response.json();
                             if (agentData.success && agentData.agent) {
                                 const updatedAgent = { ...currentAgent, ...agentData.agent };
                                 localStorage.setItem('currentAgent', JSON.stringify(updatedAgent));
                                 updateStats(updatedAgent);
-                                console.log('Stats auto-updated:', updatedAgent);
+                                // Only log if there are actual changes
+                                if (JSON.stringify(currentAgent) !== JSON.stringify(updatedAgent)) {
+                                    console.log('Stats updated with new data');
+                                }
                             }
                         }
                     } catch (error) {
-                        console.log('Auto-refresh failed:', error);
+                        // Reduce error logging frequency
+                        if (Math.random() < 0.1) { // Only log 10% of errors
+                            console.log('Auto-refresh failed:', error);
+                        }
                     }
                 }
-            }, 10000); // Refresh every 10 seconds
+            }, 30000); // Refresh every 30 seconds instead of 10
         });
     </script>
 </body>
