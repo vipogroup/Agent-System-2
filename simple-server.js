@@ -844,15 +844,88 @@ app.get('/api/agent/:id/referral-link', (req, res) => {
   });
 });
 
-app.post('/api/record-sale', (req, res) => {
-  const { referral_code, sale_amount, customer_email } = req.body;
+app.post('/api/record-sale', async (req, res) => {
+  const { referral_code, sale_amount, customer_email, product_name } = req.body;
   
-  // Mock response
+  if (!referral_code || !sale_amount) {
+    return res.status(400).json({ error: 'Referral code and sale amount are required' });
+  }
+  
+  // Find agent by referral code
+  const agent = agents.find(a => a.referral_code === referral_code);
+  if (!agent) {
+    return res.status(404).json({ error: 'Invalid referral code' });
+  }
+  
+  // Calculate commission (10%)
+  const commission = Math.round(sale_amount * 0.1);
+  
+  // Create sale record
+  const sale = {
+    id: sales.length + 1,
+    agentId: agent.id,
+    agentName: agent.full_name,
+    date: new Date().toISOString(),
+    product: product_name || 'מוצר מאתר המכירות',
+    customer: customer_email || 'לקוח מאתר המכירות',
+    amount: sale_amount,
+    commission: commission,
+    status: 'completed',
+    referral_code: referral_code,
+    created_at: new Date().toISOString()
+  };
+  
+  // Add to sales array
+  sales.push(sale);
+  saveSales(sales); // Save to file
+  
+  // Update agent stats
+  agent.sales = (agent.sales || 0) + 1;
+  agent.totalCommissions = (agent.totalCommissions || 0) + commission;
+  saveAgents(agents); // Save updated agent stats
+  
+  console.log(`New sale via referral: Agent ${agent.full_name}, Code: ${referral_code}, Amount: ₪${sale_amount}, Commission: ₪${commission}`);
+  
+  // 📱 Send immediate WhatsApp notification to agent
+  if (agent.phone) {
+    try {
+      const whatsappMessage = generateSaleNotificationMessage(
+        agent, 
+        sale_amount, 
+        commission, 
+        referral_code
+      );
+      
+      // Send WhatsApp message asynchronously (don't wait for it)
+      sendWhatsAppMessage(agent.phone, whatsappMessage)
+        .then(result => {
+          if (result.success) {
+            console.log(`✅ Referral sale notification sent to ${agent.full_name} via ${result.service}`);
+          } else {
+            console.log(`⚠️ Failed to send referral sale notification to ${agent.full_name}: ${result.error}`);
+          }
+        })
+        .catch(error => {
+          console.error(`❌ Error sending referral sale notification to ${agent.full_name}:`, error);
+        });
+    } catch (error) {
+      console.error(`❌ Error generating referral sale notification for ${agent.full_name}:`, error);
+    }
+  } else {
+    console.log(`⚠️ No phone number for agent ${agent.full_name}, skipping WhatsApp notification`);
+  }
+  
   res.json({
     success: true,
     message: 'Sale recorded successfully',
-    commission: Math.round(sale_amount * 0.1), // 10% commission
-    sale_id: Date.now()
+    commission: commission,
+    sale_id: sale.id,
+    agent: {
+      name: agent.full_name,
+      referral_code: referral_code,
+      total_sales: agent.sales,
+      total_commissions: agent.totalCommissions
+    }
   });
 });
 
