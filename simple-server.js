@@ -465,48 +465,76 @@ function resetDailyVisitCounters() {
   console.log('🔄 Daily visit counters reset');
 }
 
-// Default agents for first time setup
+// Default agents for demo
 function getDefaultAgents() {
   return [
-  {
-    id: 1,
-    full_name: 'יוסי כהן',
-    email: 'yossi@example.com',
-    password: bcrypt.hashSync('123456', 10), // Default password: 123456
-    phone: '0501234567',
-    referral_code: 'YOSSI2024',
-    is_active: true,
-    role: 'agent',
-    totalCommissions: 0,
-    visits: 0,
-    sales: 0,
-    created_at: new Date().toISOString()
-  },
-  {
-    id: 2,
-    full_name: 'שרה לוי',
-    email: 'sara@example.com',
-    password: bcrypt.hashSync('123456', 10), // Default password: 123456
-    phone: '0502345678',
-    referral_code: 'SARA2024',
-    is_active: true,
-    role: 'agent',
-    totalCommissions: 0,
-    visits: 0,
-    sales: 0,
-    created_at: new Date().toISOString()
-  },
-  {
-    id: 3,
-    full_name: 'דוד אברהם',
-    email: 'david@example.com',
-    password: bcrypt.hashSync('123456', 10), // Default password: 123456
-    phone: '0503456789',
-    referral_code: 'DAVID2024',
-    is_active: false,
-    role: 'agent',
-    totalCommissions: 0,
-  }
+    {
+      id: 1,
+      full_name: 'יוסי כהן',
+      email: 'yossi@example.com',
+      password: bcrypt.hashSync('123456', 10),
+      phone: '0501234567',
+      referral_code: 'YOSSI2024',
+      is_active: true,
+      role: 'agent',
+      totalCommissions: 0,
+      visits: 0,
+      sales: 0,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 2,
+      full_name: 'שרה לוי',
+      email: 'sara@example.com',
+      password: bcrypt.hashSync('123456', 10),
+      phone: '0502345678',
+      referral_code: 'SARA2024',
+      is_active: true,
+      role: 'agent',
+      totalCommissions: 0,
+      visits: 0,
+      sales: 0,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 3,
+      full_name: 'דוד אברהם',
+      email: 'david@example.com',
+      password: bcrypt.hashSync('123456', 10),
+      phone: '0503456789',
+      referral_code: 'DAVID2024',
+      is_active: false,
+      role: 'agent',
+      totalCommissions: 0
+    },
+    {
+      id: 4,
+      full_name: 'דניאל',
+      email: 'm0587009938@gmail.com',
+      password: bcrypt.hashSync('123456', 10),
+      phone: '0587009938',
+      referral_code: 'DANIEL2024',
+      is_active: true,
+      role: 'agent',
+      totalCommissions: 0,
+      visits: 0,
+      sales: 0,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 5,
+      full_name: 'אורי כהן',
+      email: 'uri@example.com',
+      password: bcrypt.hashSync('123456', 10),
+      phone: '0504567890',
+      referral_code: 'URI2024',
+      is_active: true,
+      role: 'agent',
+      totalCommissions: 0,
+      visits: 0,
+      sales: 0,
+      created_at: new Date().toISOString()
+    }
   ];
 }
 
