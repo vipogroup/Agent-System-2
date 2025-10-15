@@ -539,14 +539,15 @@ function getDefaultAgents() {
   ];
 }
 
-// Initialize data from database/files (async)
+// In-memory storage
 let agents = [];
 let sales = [];
+let visits = []; // Store all visits with traffic source data
 
 // Initialize data asynchronously
 async function initializeData() {
   try {
-    console.log('🔄 Initializing system...');
+    console.log('Initializing system...');
     
     // Initialize PostgreSQL connection
     const pgConnected = await initPostgres();
@@ -1847,7 +1848,7 @@ app.post('/api/track-visit', async (req, res) => {
       }
     }
     
-    // Save traffic source data (you can expand this to save to database)
+    // Save traffic source data to visits array
     const visitData = {
       id: Date.now(),
       referralCode: referralCode,
@@ -1858,6 +1859,14 @@ app.post('/api/track-visit', async (req, res) => {
       timestamp: timestamp,
       ip: req.ip
     };
+    
+    // Add to visits array for analytics
+    visits.push(visitData);
+    
+    // Keep only last 1000 visits to prevent memory issues
+    if (visits.length > 1000) {
+      visits = visits.slice(-1000);
+    }
     
     // Log the visit for analytics
     console.log('📊 Visit Analytics:', JSON.stringify(visitData, null, 2));
@@ -1964,6 +1973,7 @@ app.post('/api/track-sale', async (req, res) => {
 app.get('/api/analytics/traffic-sources', async (req, res) => {
   try {
     console.log('📊 Fetching traffic source analytics...');
+    console.log(`📊 Total visits in memory: ${visits.length}`);
     
     // Initialize analytics structure
     const analytics = {
@@ -1976,52 +1986,55 @@ app.get('/api/analytics/traffic-sources', async (req, res) => {
         direct: { visits: 0, sales: 0, revenue: 0 },
         referral: { visits: 0, sales: 0, revenue: 0 }
       },
-      totalVisits: 0,
+      totalVisits: visits.length,
       totalSales: sales.length,
       totalRevenue: sales.reduce((sum, sale) => sum + sale.amount, 0)
     };
     
-    // Calculate total visits from agents
-    agents.forEach(agent => {
-      analytics.totalVisits += agent.visits || 0;
+    // Count visits by actual traffic source
+    visits.forEach(visit => {
+      const source = visit.trafficSource?.source || 'direct';
+      if (analytics.sources[source]) {
+        analytics.sources[source].visits++;
+      } else {
+        analytics.sources.referral.visits++; // Unknown sources go to referral
+      }
     });
     
-    // For now, since we don't have detailed traffic source data stored yet,
-    // we'll simulate some data based on existing visits
-    if (analytics.totalVisits > 0) {
-      // Distribute visits across sources (this is temporary until we have real data)
-      analytics.sources.direct.visits = Math.floor(analytics.totalVisits * 0.4); // 40% direct
-      analytics.sources.facebook.visits = Math.floor(analytics.totalVisits * 0.25); // 25% facebook
-      analytics.sources.instagram.visits = Math.floor(analytics.totalVisits * 0.15); // 15% instagram
-      analytics.sources.whatsapp.visits = Math.floor(analytics.totalVisits * 0.10); // 10% whatsapp
-      analytics.sources.google.visits = Math.floor(analytics.totalVisits * 0.10); // 10% google
-      
-      // Distribute sales proportionally
-      if (analytics.totalSales > 0) {
-        analytics.sources.direct.sales = Math.floor(analytics.totalSales * 0.3);
-        analytics.sources.facebook.sales = Math.floor(analytics.totalSales * 0.4);
-        analytics.sources.instagram.sales = Math.floor(analytics.totalSales * 0.2);
-        analytics.sources.whatsapp.sales = Math.floor(analytics.totalSales * 0.1);
-        
-        // Distribute revenue proportionally
-        analytics.sources.direct.revenue = Math.floor(analytics.totalRevenue * 0.3);
-        analytics.sources.facebook.revenue = Math.floor(analytics.totalRevenue * 0.4);
-        analytics.sources.instagram.revenue = Math.floor(analytics.totalRevenue * 0.2);
-        analytics.sources.whatsapp.revenue = Math.floor(analytics.totalRevenue * 0.1);
+    // Count sales by traffic source
+    sales.forEach(sale => {
+      if (sale.trafficSource) {
+        const source = sale.trafficSource.source || 'direct';
+        if (analytics.sources[source]) {
+          analytics.sources[source].sales++;
+          analytics.sources[source].revenue += sale.amount || 0;
+        } else {
+          analytics.sources.referral.sales++;
+          analytics.sources.referral.revenue += sale.amount || 0;
+        }
+      } else {
+        // Old sales without traffic source data
+        analytics.sources.direct.sales++;
+        analytics.sources.direct.revenue += sale.amount || 0;
       }
-    }
+    });
     
-    console.log('📊 Analytics calculated:', {
+    console.log('📊 Real Analytics calculated:', {
       totalVisits: analytics.totalVisits,
       totalSales: analytics.totalSales,
-      totalRevenue: analytics.totalRevenue
+      totalRevenue: analytics.totalRevenue,
+      visitsBySource: Object.entries(analytics.sources).map(([source, data]) => 
+        `${source}: ${data.visits} visits, ${data.sales} sales`
+      )
     });
     
     res.json({
       success: true,
       analytics: analytics,
       timestamp: new Date().toISOString(),
-      note: 'נתונים מבוססים על סה"כ ביקורים ומכירות. מעקב מפורט יתחיל מהביקורים הבאים.'
+      note: analytics.totalVisits > 0 ? 
+        'נתונים אמיתיים מהמערכת - מעקב מדויק של מקורות התנועה' : 
+        'עדיין אין ביקורים עם מעקב מקור תנועה'
     });
     
   } catch (error) {
