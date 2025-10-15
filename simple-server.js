@@ -226,15 +226,15 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com", "https://code.jquery.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://unpkg.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com", "https://code.jquery.com", "https://cdn.jsdelivr.net", "https://unpkg.com", "https://js.payplus.co.il"],
       scriptSrcAttr: ["'unsafe-inline'"], // Allow inline event handlers
-      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://fonts.googleapis.com"],
-      imgSrc: ["'self'", "data:", "https:", "blob:"],
-      connectSrc: ["'self'", "https:", "wss:"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
+      imgSrc: ["'self'", "data:", "https:", "blob:", "https://via.placeholder.com"],
+      connectSrc: ["'self'", "https:", "wss:", "https://js.payplus.co.il", "https://api.payplus.co.il"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
-      frameSrc: ["'self'"]
+      frameSrc: ["'self'", "https://js.payplus.co.il"]
     }
   },
   hsts: {
@@ -592,10 +592,51 @@ let payoutRequests = [
   }
 ];
 
-// Serve static files
-app.use('/public', express.static(path.join(__dirname, 'public')));
-app.use('/vc', express.static(path.join(__dirname, 'vc')));
-app.use(express.static(path.join(__dirname))); // Serve files from root directory
+// Configure MIME types
+express.static.mime.define({
+  'application/javascript': ['js'],
+  'text/css': ['css'],
+  'text/html': ['html'],
+  'image/webp': ['webp'],
+  'application/json': ['json']
+});
+
+// Serve static files with proper headers
+app.use('/public', express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    } else if (path.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    }
+  }
+}));
+
+app.use('/vc', express.static(path.join(__dirname, 'vc'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    } else if (path.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    }
+  }
+}));
+
+app.use(express.static(path.join(__dirname), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    } else if (path.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    }
+  }
+})); // Serve files from root directory
 
 // Root route
 app.get('/', (req, res) => {
@@ -605,6 +646,45 @@ app.get('/', (req, res) => {
 // GitHub system route
 app.get('/github-system.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'github-system.html'));
+});
+
+// List images endpoint (replacement for PHP)
+app.get('/vc/list-images.php', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  
+  res.setHeader('Content-Type', 'application/json');
+  
+  const folder = req.query.folder || '';
+  const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'ogg'];
+  const images = [];
+  
+  try {
+    if (folder && fs.existsSync(folder)) {
+      const files = fs.readdirSync(folder);
+      
+      files.forEach(file => {
+        if (file === '.' || file === '..') return;
+        
+        const ext = path.extname(file).toLowerCase().substring(1);
+        if (allowedExtensions.includes(ext)) {
+          images.push({
+            path: folder + '/' + file,
+            name: path.parse(file).name
+          });
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error reading directory:', error);
+  }
+  
+  res.json(images);
+});
+
+// Product spec route
+app.get('/vc/product-spec.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'vc', 'product-spec.html'));
 });
 
 // Login pages
