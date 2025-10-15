@@ -428,6 +428,83 @@
             </div>
         </div>
         
+        <!-- 🔗 UTM Link Generator Section -->
+        <div class="section">
+            <div class="section-header">
+                🔗 יוצר קישורי UTM - מעקב מדויק לכל פלטפורמה
+            </div>
+            <div style="padding: 1.5rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">בחר סוכן:</label>
+                        <select id="utmAgentSelect" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="">טוען סוכנים...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">מקור התנועה:</label>
+                        <select id="utmSource" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="facebook">📘 פייסבוק</option>
+                            <option value="instagram">📷 אינסטגרם</option>
+                            <option value="whatsapp">💬 וואטסאפ</option>
+                            <option value="tiktok">🎵 טיקטוק</option>
+                            <option value="google">🔍 גוגל</option>
+                            <option value="youtube">📺 יוטיוב</option>
+                            <option value="linkedin">💼 לינקדאין</option>
+                            <option value="twitter">🐦 טוויטר</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">סוג הפרסום:</label>
+                        <select id="utmMedium" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="social">📱 פוסט רגיל</option>
+                            <option value="story">📸 סטורי</option>
+                            <option value="paid">💰 פרסומת בתשלום</option>
+                            <option value="messaging">💬 הודעה אישית</option>
+                            <option value="video">🎥 וידאו</option>
+                            <option value="organic">🌱 אורגני</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">שם הקמפיין:</label>
+                        <input type="text" id="utmCampaign" placeholder="chair_winter_sale" 
+                               style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                </div>
+                
+                <button onclick="generateUTMLink()" 
+                        style="background: #667eea; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 5px; cursor: pointer; font-size: 1rem; margin-bottom: 1rem;">
+                    🔗 צור קישור UTM
+                </button>
+                
+                <div id="utmResult" style="display: none;">
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border: 1px solid #dee2e6;">
+                        <h4 style="margin-bottom: 0.5rem; color: #333;">📋 הקישור שלך מוכן:</h4>
+                        <div style="background: white; padding: 0.75rem; border-radius: 5px; border: 1px solid #ddd; margin: 0.5rem 0; word-break: break-all; font-family: monospace; font-size: 0.9rem;" id="generatedLink"></div>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button onclick="copyUTMLink()" style="background: #28a745; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                                📋 העתק קישור
+                            </button>
+                            <button onclick="shareWhatsApp()" style="background: #25d366; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                                💬 שתף בוואטסאפ
+                            </button>
+                            <button onclick="shareFacebook()" style="background: #1877f2; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                                📘 שתף בפייסבוק
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="background: #e3f2fd; padding: 1rem; border-radius: 8px; border-left: 4px solid #2196f3; margin-top: 1rem;">
+                    <strong>💡 איך זה עובד:</strong><br>
+                    1. בחר סוכן ומקור תנועה<br>
+                    2. תקבל קישור מותאם אישית<br>
+                    3. שתף את הקישור ברשת שבחרת<br>
+                    4. עקוב אחר התוצאות בדשבורד האנליטיקס למטה
+                </div>
+            </div>
+        </div>
+
         <!-- 📊 Traffic Source Analytics Section -->
         <div class="section">
             <div class="section-header">
@@ -453,6 +530,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadData();
             loadTrafficAnalytics();
+            populateAgentSelect();
             
             // Auto refresh every 30 seconds to show updated data
             setInterval(() => {
@@ -849,6 +927,112 @@
             if (confirm('האם אתה בטוח שברצונך להתנתק?')) {
                 window.location.href = '/admin-login.html';
             }
+        }
+        
+        // 🔗 UTM Link Generator Functions
+        
+        // Populate agent select dropdown
+        async function populateAgentSelect() {
+            try {
+                const response = await fetch('/api/agents/all');
+                if (response.ok) {
+                    const data = await response.json();
+                    const select = document.getElementById('utmAgentSelect');
+                    
+                    select.innerHTML = '<option value="">בחר סוכן...</option>';
+                    
+                    if (data.success && data.agents) {
+                        data.agents.forEach(agent => {
+                            if (agent.role !== 'admin') {
+                                const option = document.createElement('option');
+                                option.value = agent.referral_code || '';
+                                option.textContent = `${agent.full_name} (${agent.email})`;
+                                select.appendChild(option);
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading agents for UTM:', error);
+            }
+        }
+        
+        // Generate UTM link
+        function generateUTMLink() {
+            const agentCode = document.getElementById('utmAgentSelect').value;
+            const source = document.getElementById('utmSource').value;
+            const medium = document.getElementById('utmMedium').value;
+            const campaign = document.getElementById('utmCampaign').value || 'default';
+            
+            if (!agentCode) {
+                alert('אנא בחר סוכן');
+                return;
+            }
+            
+            // Build UTM link
+            const baseUrl = 'https://agent-system-2.onrender.com/vc/index.html';
+            const params = new URLSearchParams();
+            
+            // Add referral code
+            params.append('ref', agentCode);
+            
+            // Add UTM parameters
+            params.append('utm_source', source);
+            params.append('utm_medium', medium);
+            params.append('utm_campaign', campaign);
+            
+            const fullUrl = `${baseUrl}?${params.toString()}`;
+            
+            // Display result
+            document.getElementById('generatedLink').textContent = fullUrl;
+            document.getElementById('utmResult').style.display = 'block';
+            
+            // Store for sharing functions
+            window.currentUTMLink = fullUrl;
+            
+            console.log('Generated UTM link:', fullUrl);
+        }
+        
+        // Copy UTM link to clipboard
+        async function copyUTMLink() {
+            try {
+                await navigator.clipboard.writeText(window.currentUTMLink);
+                
+                // Visual feedback
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = '✅ הועתק!';
+                button.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#28a745';
+                }, 2000);
+                
+            } catch (error) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = window.currentUTMLink;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                alert('הקישור הועתק ללוח!');
+            }
+        }
+        
+        // Share on WhatsApp
+        function shareWhatsApp() {
+            const message = `🪑 כורסת עיסוי ביתית במחיר מיוחד!\n\n${window.currentUTMLink}`;
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+        
+        // Share on Facebook
+        function shareFacebook() {
+            const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.currentUTMLink)}`;
+            window.open(facebookUrl, '_blank', 'width=600,height=400');
         }
     </script>
 </body>
