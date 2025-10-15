@@ -2115,3 +2115,221 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   POST /api/whatsapp/test - Send test message`);
   console.log(`   POST /api/agents/reset-daily-visits - Reset daily visit counters`);
 });
+
+// 💳 PayPlus Payment Integration Endpoints
+
+// Create PayPlus payment
+app.post('/api/payplus/create-payment', async (req, res) => {
+  try {
+    const { 
+      amount, 
+      productName, 
+      customerName, 
+      customerEmail, 
+      customerPhone,
+      referralCode,
+      trafficSource 
+    } = req.body;
+
+    console.log('💳 Creating PayPlus payment:', {
+      amount,
+      productName,
+      customerName,
+      referralCode
+    });
+
+    // PayPlus API configuration (you'll need to set these environment variables)
+    const payPlusConfig = {
+      api_key: process.env.PAYPLUS_API_KEY || 'your-api-key',
+      secret_key: process.env.PAYPLUS_SECRET_KEY || 'your-secret-key',
+      terminal_uid: process.env.PAYPLUS_TERMINAL_UID || 'your-terminal-uid'
+    };
+
+    // Create payment request for PayPlus
+    const paymentData = {
+      terminal_uid: payPlusConfig.terminal_uid,
+      amount: amount,
+      currency_code: 'ILS',
+      product_name: productName,
+      customer: {
+        customer_name: customerName,
+        email: customerEmail,
+        phone: customerPhone
+      },
+      custom_fields: {
+        referral_code: referralCode || '',
+        traffic_source: JSON.stringify(trafficSource || {}),
+        agent_system: 'true'
+      },
+      success_url: `${req.protocol}://${req.get('host')}/payment-success`,
+      failure_url: `${req.protocol}://${req.get('host')}/payment-failed`,
+      callback_url: `${req.protocol}://${req.get('host')}/api/payplus/webhook`
+    };
+
+    // In a real implementation, you would make an API call to PayPlus here
+    // For now, we'll simulate the response
+    const mockPaymentResponse = {
+      payment_page_link: `https://checkout.payplus.co.il/?payment_uid=mock_${Date.now()}`,
+      payment_uid: `mock_payment_${Date.now()}`,
+      status: 'created'
+    };
+
+    console.log('✅ PayPlus payment created:', mockPaymentResponse.payment_uid);
+
+    res.json({
+      success: true,
+      payment_url: mockPaymentResponse.payment_page_link,
+      payment_uid: mockPaymentResponse.payment_uid,
+      message: 'תשלום נוצר בהצלחה'
+    });
+
+  } catch (error) {
+    console.error('❌ Error creating PayPlus payment:', error);
+    res.status(500).json({
+      success: false,
+      error: 'שגיאה ביצירת התשלום'
+    });
+  }
+});
+
+// PayPlus webhook for payment notifications
+app.post('/api/payplus/webhook', async (req, res) => {
+  try {
+    console.log('🔔 PayPlus webhook received:', req.body);
+
+    const { 
+      payment_uid, 
+      status, 
+      amount, 
+      customer,
+      custom_fields 
+    } = req.body;
+
+    if (status === 'completed' || status === 'approved') {
+      console.log('✅ Payment completed:', payment_uid);
+
+      // Extract custom data
+      const referralCode = custom_fields?.referral_code;
+      const trafficSource = custom_fields?.traffic_source ? 
+        JSON.parse(custom_fields.traffic_source) : null;
+
+      // Find agent if referral code exists
+      let agent = null;
+      if (referralCode) {
+        agent = agents.find(a => a.referral_code === referralCode);
+      }
+
+      // Calculate commission
+      const commissionRate = parseFloat(process.env.COMMISSION_RATE) || 0.10;
+      const commission = amount * commissionRate;
+
+      // Create sale record
+      const sale = {
+        id: Date.now(),
+        payment_uid: payment_uid,
+        agentId: agent ? agent.id : null,
+        agentName: agent ? agent.full_name : 'Direct Sale',
+        referralCode: referralCode || null,
+        amount: amount,
+        commission: agent ? commission : 0,
+        productName: 'כורסת עיסוי VC',
+        customerName: customer?.customer_name || 'Unknown',
+        customerEmail: customer?.email || '',
+        customerPhone: customer?.phone || '',
+        trafficSource: trafficSource,
+        paymentMethod: 'PayPlus',
+        status: 'completed',
+        timestamp: new Date().toISOString()
+      };
+
+      // Add to sales array
+      sales.push(sale);
+
+      // Update agent stats
+      if (agent) {
+        agent.sales = (agent.sales || 0) + 1;
+        agent.totalCommissions = (agent.totalCommissions || 0) + commission;
+        console.log(`💰 Commission added to ${agent.full_name}: ₪${commission}`);
+      }
+
+      // Save updated data
+      await saveAgents(agents);
+
+      console.log('📊 Sale recorded:', {
+        amount: sale.amount,
+        agent: sale.agentName,
+        commission: sale.commission
+      });
+    }
+
+    // Always respond with 200 to acknowledge webhook
+    res.status(200).json({ received: true });
+
+  } catch (error) {
+    console.error('❌ Error processing PayPlus webhook:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
+
+// Payment success page
+app.get('/payment-success', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="he" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>תשלום הושלם בהצלחה</title>
+        <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f8f9fa; }
+            .success-container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; }
+            .success-icon { font-size: 4rem; color: #28a745; margin-bottom: 20px; }
+            h1 { color: #28a745; margin-bottom: 20px; }
+            p { color: #666; margin-bottom: 30px; }
+            .btn { background: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; }
+        </style>
+    </head>
+    <body>
+        <div class="success-container">
+            <div class="success-icon">✅</div>
+            <h1>תשלום הושלם בהצלחה!</h1>
+            <p>תודה על הרכישה. פרטי ההזמנה נשלחו אליך במייל.</p>
+            <p>נציג יצור איתך קשר בקרוב לתיאום המשלוח.</p>
+            <a href="/vc/index.html" class="btn">חזרה לדף המוצר</a>
+        </div>
+    </body>
+    </html>
+  `);
+});
+
+// Payment failed page
+app.get('/payment-failed', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="he" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>תשלום נכשל</title>
+        <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f8f9fa; }
+            .error-container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; }
+            .error-icon { font-size: 4rem; color: #dc3545; margin-bottom: 20px; }
+            h1 { color: #dc3545; margin-bottom: 20px; }
+            p { color: #666; margin-bottom: 30px; }
+            .btn { background: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 0 10px; }
+            .btn-retry { background: #28a745; }
+        </style>
+    </head>
+    <body>
+        <div class="error-container">
+            <div class="error-icon">❌</div>
+            <h1>התשלום לא הושלם</h1>
+            <p>אירעה שגיאה בעיבוד התשלום. אנא נסה שוב או צור קשר לקבלת עזרה.</p>
+            <a href="/vc/index.html" class="btn btn-retry">נסה שוב</a>
+            <a href="https://wa.me/972587009938" class="btn">צור קשר</a>
+        </div>
+    </body>
+    </html>
+  `);
+});
