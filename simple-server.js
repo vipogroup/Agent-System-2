@@ -1960,8 +1960,8 @@ app.post('/api/track-sale', async (req, res) => {
   }
 });
 
-// Get traffic source analytics
-app.get('/api/analytics/traffic-sources', authenticate, async (req, res) => {
+// Get traffic source analytics (no authentication required for basic stats)
+app.get('/api/analytics/traffic-sources', async (req, res) => {
   try {
     // This is a basic implementation - you can expand this with proper database queries
     // For now, we'll return mock data structure
