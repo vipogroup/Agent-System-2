@@ -258,6 +258,136 @@
             border-radius: 5px;
             margin: 1rem;
         }
+        
+        /* 📊 Traffic Analytics Styles */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem;
+        }
+        
+        .analytics-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 1px solid #dee2e6;
+        }
+        
+        .analytics-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #333;
+            text-align: center;
+        }
+        
+        .source-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .source-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+        
+        .source-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .source-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: white;
+        }
+        
+        .source-icon.facebook { background: #1877f2; }
+        .source-icon.instagram { background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%); }
+        .source-icon.tiktok { background: #000; }
+        .source-icon.google { background: #4285f4; }
+        .source-icon.whatsapp { background: #25d366; }
+        .source-icon.direct { background: #6c757d; }
+        .source-icon.referral { background: #17a2b8; }
+        
+        .source-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .source-stats {
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .conversion-rate {
+            font-size: 0.8rem;
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .no-data {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            padding: 2rem;
+        }
+        
+        .refresh-analytics {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 1rem;
+            float: left;
+        }
+        
+        .refresh-analytics:hover {
+            background: #5a6fd8;
+        }
+        
+        @media (max-width: 768px) {
+            .analytics-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                margin: 1rem;
+            }
+            
+            .analytics-card {
+                padding: 1rem;
+            }
+            
+            .source-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
+            }
+            
+            .source-stats {
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -288,6 +418,24 @@
                 <div class="stat-number" id="totalVisits">-</div>
                 <div class="stat-label">סה"כ ביקורים</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalSales">-</div>
+                <div class="stat-label">סה"כ מכירות</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalRevenue">-</div>
+                <div class="stat-label">סה"כ הכנסות</div>
+            </div>
+        </div>
+        
+        <!-- 📊 Traffic Source Analytics Section -->
+        <div class="section">
+            <div class="section-header">
+                📊 אנליטיקס מקורות תנועה - מאיפה מגיעים הלקוחות?
+            </div>
+            <div id="trafficAnalyticsContainer">
+                <div class="loading">טוען נתוני אנליטיקס...</div>
+            </div>
         </div>
         
         <div class="section">
@@ -304,9 +452,13 @@
         // Load data on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadData();
+            loadTrafficAnalytics();
             
-            // Auto refresh every 10 seconds to show updated commissions
-            setInterval(loadData, 10000);
+            // Auto refresh every 30 seconds to show updated data
+            setInterval(() => {
+                loadData();
+                loadTrafficAnalytics();
+            }, 30000);
         });
         
         async function loadData() {
@@ -412,11 +564,165 @@
             const active = agents.filter(a => a.is_active).length;
             const blocked = agents.filter(a => !a.is_active).length;
             const totalVisits = agents.reduce((sum, a) => sum + (a.visits || 0), 0);
+            const totalSales = agents.reduce((sum, a) => sum + (a.sales || 0), 0);
+            const totalRevenue = agents.reduce((sum, a) => sum + (a.totalCommissions || 0), 0);
             
             document.getElementById('totalAgents').textContent = total;
             document.getElementById('activeAgents').textContent = active;
             document.getElementById('blockedAgents').textContent = blocked;
             document.getElementById('totalVisits').textContent = totalVisits;
+            document.getElementById('totalSales').textContent = totalSales;
+            document.getElementById('totalRevenue').textContent = `₪${totalRevenue.toFixed(0)}`;
+        }
+        
+        // 📊 Load Traffic Analytics
+        async function loadTrafficAnalytics() {
+            console.log('Loading traffic analytics...');
+            
+            const container = document.getElementById('trafficAnalyticsContainer');
+            container.innerHTML = '<div class="loading">טוען נתוני אנליטיקס...</div>';
+            
+            try {
+                const response = await fetch('/api/analytics/traffic-sources');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Analytics data:', data);
+                
+                if (data.success && data.analytics) {
+                    displayTrafficAnalytics(data.analytics);
+                } else {
+                    throw new Error('Invalid analytics data format');
+                }
+                
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                container.innerHTML = `
+                    <div class="error">
+                        ❌ שגיאה בטעינת נתוני אנליטיקס: ${error.message}<br>
+                        <button onclick="loadTrafficAnalytics()" style="margin-top: 10px; padding: 5px 15px;">נסה שוב</button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Display traffic analytics
+        function displayTrafficAnalytics(analytics) {
+            const container = document.getElementById('trafficAnalyticsContainer');
+            
+            const sourceNames = {
+                facebook: 'פייסבוק',
+                instagram: 'אינסטגרם', 
+                tiktok: 'טיקטוק',
+                google: 'גוגל',
+                whatsapp: 'וואטסאפ',
+                direct: 'ישיר',
+                referral: 'הפניה'
+            };
+            
+            const sourceIcons = {
+                facebook: '📘',
+                instagram: '📷',
+                tiktok: '🎵',
+                google: '🔍',
+                whatsapp: '💬',
+                direct: '🌐',
+                referral: '🔗'
+            };
+            
+            // Calculate total visits and sales for percentages
+            const totalVisits = Object.values(analytics.sources).reduce((sum, source) => sum + source.visits, 0);
+            const totalSales = Object.values(analytics.sources).reduce((sum, source) => sum + source.sales, 0);
+            
+            let analyticsHTML = `
+                <button class="refresh-analytics" onclick="loadTrafficAnalytics()">
+                    🔄 רענן אנליטיקס
+                </button>
+                <div style="clear: both;"></div>
+                
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <div class="analytics-title">📊 ביקורים לפי מקור</div>
+            `;
+            
+            // Sort sources by visits (descending)
+            const sortedByVisits = Object.entries(analytics.sources)
+                .sort(([,a], [,b]) => b.visits - a.visits);
+            
+            if (totalVisits === 0) {
+                analyticsHTML += '<div class="no-data">עדיין אין נתוני ביקורים</div>';
+            } else {
+                sortedByVisits.forEach(([source, data]) => {
+                    if (data.visits > 0) {
+                        const percentage = ((data.visits / totalVisits) * 100).toFixed(1);
+                        analyticsHTML += `
+                            <div class="source-item">
+                                <div class="source-info">
+                                    <div class="source-icon ${source}">${sourceIcons[source]}</div>
+                                    <div class="source-name">${sourceNames[source]}</div>
+                                </div>
+                                <div class="source-stats">
+                                    <div><span class="stat-value">${data.visits}</span> ביקורים</div>
+                                    <div>${percentage}% מהתנועה</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            }
+            
+            analyticsHTML += `
+                    </div>
+                    
+                    <div class="analytics-card">
+                        <div class="analytics-title">💰 מכירות לפי מקור</div>
+            `;
+            
+            // Sort sources by sales (descending)
+            const sortedBySales = Object.entries(analytics.sources)
+                .sort(([,a], [,b]) => b.sales - a.sales);
+            
+            if (totalSales === 0) {
+                analyticsHTML += '<div class="no-data">עדיין אין נתוני מכירות</div>';
+            } else {
+                sortedBySales.forEach(([source, data]) => {
+                    if (data.sales > 0) {
+                        const conversionRate = data.visits > 0 ? ((data.sales / data.visits) * 100).toFixed(1) : '0';
+                        const percentage = ((data.sales / totalSales) * 100).toFixed(1);
+                        
+                        analyticsHTML += `
+                            <div class="source-item">
+                                <div class="source-info">
+                                    <div class="source-icon ${source}">${sourceIcons[source]}</div>
+                                    <div class="source-name">${sourceNames[source]}</div>
+                                </div>
+                                <div class="source-stats">
+                                    <div><span class="stat-value">${data.sales}</span> מכירות</div>
+                                    <div>₪<span class="stat-value">${data.revenue}</span> הכנסות</div>
+                                    <div class="conversion-rate">${conversionRate}% המרה</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            }
+            
+            analyticsHTML += `
+                    </div>
+                </div>
+                
+                <div style="margin: 1rem; padding: 1rem; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                    <strong>💡 טיפ:</strong> כדי לקבל נתונים מדויקים, הוסף UTM parameters לקישורים שלך:<br>
+                    <code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;">
+                        ?utm_source=facebook&utm_medium=social&utm_campaign=winter2024
+                    </code>
+                </div>
+            `;
+            
+            container.innerHTML = analyticsHTML;
         }
         
         async function toggleAgent(agentId, currentStatus) {

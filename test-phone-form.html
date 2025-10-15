@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>בדיקת וולידציה טלפון</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .valid { background: #d4edda; color: #155724; }
+        .invalid { background: #f8d7da; color: #721c24; }
+        input { padding: 10px; margin: 10px 0; width: 300px; }
+        button { padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 בדיקת וולידציה מספר טלפון</h1>
+    
+    <div>
+        <label>הכנס מספר טלפון:</label><br>
+        <input type="tel" id="phoneInput" placeholder="0555580986" value="0555580986">
+        <button onclick="testPhone()">בדוק</button>
+    </div>
+    
+    <div id="result"></div>
+    
+    <h3>מספרים לבדיקה:</h3>
+    <button onclick="testSpecific('0555580986')">0555580986</button>
+    <button onclick="testSpecific('0531234567')">0531234567</button>
+    <button onclick="testSpecific('0501234567')">0501234567</button>
+    
+    <script>
+        // Same regex as in register-agent.html
+        const phoneRegex = /^(\+972|972|0)([23489]|5[0-9]|77)[0-9]{7}$/;
+        
+        function testPhone() {
+            const phone = document.getElementById('phoneInput').value;
+            testSpecific(phone);
+        }
+        
+        function testSpecific(phone) {
+            const cleanPhone = phone.replace(/[\s\-]/g, '');
+            const isValid = phoneRegex.test(cleanPhone);
+            
+            const result = document.getElementById('result');
+            const status = isValid ? 'תקין ✅' : 'לא תקין ❌';
+            const className = isValid ? 'valid' : 'invalid';
+            
+            result.innerHTML = `
+                <div class="result ${className}">
+                    <strong>מספר:</strong> ${phone}<br>
+                    <strong>נקי:</strong> ${cleanPhone}<br>
+                    <strong>אורך:</strong> ${cleanPhone.length}<br>
+                    <strong>תוצאה:</strong> ${status}<br>
+                    <strong>Regex:</strong> ${phoneRegex}<br>
+                    <strong>Match:</strong> ${JSON.stringify(cleanPhone.match(phoneRegex))}
+                </div>
+            `;
+            
+            // Update input
+            document.getElementById('phoneInput').value = phone;
+        }
+        
+        // Test on page load
+        window.onload = () => testSpecific('0555580986');
+    </script>
+</body>
+</html>

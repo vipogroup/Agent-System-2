@@ -908,11 +908,129 @@
                 }
             }
             
+            // 📊 מעקב מקור תנועה (Traffic Source Tracking)
+            function detectTrafficSource() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const referrer = document.referrer.toLowerCase();
+                
+                // זיהוי מקור תנועה
+                let source = 'direct';
+                let medium = 'none';
+                let campaign = '';
+                
+                // בדיקת UTM parameters
+                if (urlParams.get('utm_source')) {
+                    source = urlParams.get('utm_source');
+                    medium = urlParams.get('utm_medium') || 'unknown';
+                    campaign = urlParams.get('utm_campaign') || '';
+                }
+                // זיהוי אוטומטי לפי referrer
+                else if (referrer.includes('facebook.com') || referrer.includes('fb.com')) {
+                    source = 'facebook';
+                    medium = 'social';
+                } else if (referrer.includes('instagram.com')) {
+                    source = 'instagram';
+                    medium = 'social';
+                } else if (referrer.includes('tiktok.com')) {
+                    source = 'tiktok';
+                    medium = 'social';
+                } else if (referrer.includes('google.com') || referrer.includes('google.co.il')) {
+                    source = 'google';
+                    medium = referrer.includes('/search') ? 'organic' : 'referral';
+                } else if (referrer.includes('whatsapp.com') || referrer.includes('wa.me')) {
+                    source = 'whatsapp';
+                    medium = 'messaging';
+                } else if (referrer.includes('youtube.com')) {
+                    source = 'youtube';
+                    medium = 'video';
+                } else if (referrer.includes('linkedin.com')) {
+                    source = 'linkedin';
+                    medium = 'social';
+                } else if (referrer.includes('twitter.com') || referrer.includes('x.com')) {
+                    source = 'twitter';
+                    medium = 'social';
+                } else if (referrer && referrer !== '') {
+                    source = 'referral';
+                    medium = 'referral';
+                }
+                
+                return {
+                    source: source,
+                    medium: medium,
+                    campaign: campaign,
+                    referrer: document.referrer,
+                    url: window.location.href,
+                    timestamp: new Date().toISOString()
+                };
+            }
+            
+            // שליחת מעקב ביקור עם מקור תנועה
+            function trackVisitWithSource() {
+                const trafficSource = detectTrafficSource();
+                const referralCode = getReferralCode();
+                
+                console.log('🔍 Traffic Source Detected:', trafficSource);
+                
+                // שליחת הנתונים לשרת
+                fetch('/api/track-visit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        referralCode: referralCode,
+                        trafficSource: trafficSource,
+                        userAgent: navigator.userAgent,
+                        timestamp: new Date().toISOString()
+                    })
+                }).then(response => {
+                    if (response.ok) {
+                        console.log('✅ Visit tracked with traffic source');
+                    }
+                }).catch(error => {
+                    console.error('❌ Error tracking visit:', error);
+                });
+            }
+            
+            // עדכון פונקציית מעקב מכירה לכלול מקור תנועה
+            function trackSaleWithSource(amount, agentId, productName) {
+                const trafficSource = detectTrafficSource();
+                const referralCode = getReferralCode();
+                
+                console.log('💰 Sale tracked with source:', trafficSource);
+                
+                // שליחת הנתונים לשרת
+                fetch('/api/track-sale', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount: amount,
+                        agentId: agentId,
+                        referralCode: referralCode,
+                        productName: productName,
+                        trafficSource: trafficSource,
+                        timestamp: new Date().toISOString()
+                    })
+                }).then(response => {
+                    if (response.ok) {
+                        console.log('✅ Sale tracked with traffic source');
+                    }
+                }).catch(error => {
+                    console.error('❌ Error tracking sale:', error);
+                });
+            }
+
             // הפעל את המעקב כאשר הדף נטען
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initTracking);
+                document.addEventListener('DOMContentLoaded', function() {
+                    initTracking();
+                    trackVisitWithSource(); // מעקב ביקור עם מקור תנועה
+                });
             } else {
                 initTracking();
+                trackVisitWithSource(); // מעקב ביקור עם מקור תנועה
             }
             
             // הוסף מעקב לכפתור הרכישה
@@ -921,9 +1039,8 @@
                 if (e.target.closest('.join-group-btn')) {
                     console.log('Purchase button clicked!');
                     
-                    // עקוב אחר הרכישה - סכום לדוגמה ₪2500
-                    // יש לעדכן את הסכום בהתאם למחיר האמיתי
-                    trackSale(2500, null, 'כורסת עיסוי VC');
+                    // עקוב אחר הרכישה עם מקור תנועה - סכום ₪4900 (המחיר מהדף)
+                    trackSaleWithSource(4900, null, 'כורסת עיסוי VC');
                     
                     // הצג הודעה למשתמש
                     setTimeout(() => {

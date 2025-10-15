@@ -1824,6 +1824,183 @@ app.post('/api/logs/clear', (req, res) => {
   }
 });
 
+// 📊 Traffic Source Tracking Endpoints
+
+// Track visit with traffic source
+app.post('/api/track-visit', async (req, res) => {
+  try {
+    const { referralCode, trafficSource, userAgent, timestamp } = req.body;
+    
+    console.log('🔍 Visit tracked with traffic source:', {
+      source: trafficSource.source,
+      medium: trafficSource.medium,
+      referralCode: referralCode || 'none'
+    });
+    
+    // Find agent by referral code
+    let agent = null;
+    if (referralCode) {
+      agent = agents.find(a => a.referral_code === referralCode);
+      if (agent) {
+        agent.visits = (agent.visits || 0) + 1;
+        console.log(`👥 Visit tracked for agent: ${agent.full_name} (Total: ${agent.visits})`);
+      }
+    }
+    
+    // Save traffic source data (you can expand this to save to database)
+    const visitData = {
+      id: Date.now(),
+      referralCode: referralCode,
+      agentId: agent ? agent.id : null,
+      agentName: agent ? agent.full_name : null,
+      trafficSource: trafficSource,
+      userAgent: userAgent,
+      timestamp: timestamp,
+      ip: req.ip
+    };
+    
+    // Log the visit for analytics
+    console.log('📊 Visit Analytics:', JSON.stringify(visitData, null, 2));
+    
+    // Save updated agents data
+    await saveAgents(agents);
+    
+    res.json({ 
+      success: true, 
+      message: 'Visit tracked successfully',
+      trafficSource: trafficSource.source
+    });
+    
+  } catch (error) {
+    console.error('❌ Error tracking visit:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to track visit' 
+    });
+  }
+});
+
+// Track sale with traffic source
+app.post('/api/track-sale', async (req, res) => {
+  try {
+    const { amount, agentId, referralCode, productName, trafficSource, timestamp } = req.body;
+    
+    console.log('💰 Sale tracked with traffic source:', {
+      amount: amount,
+      source: trafficSource.source,
+      medium: trafficSource.medium,
+      product: productName
+    });
+    
+    // Find agent
+    let agent = null;
+    if (referralCode) {
+      agent = agents.find(a => a.referral_code === referralCode);
+    } else if (agentId) {
+      agent = agents.find(a => a.id === agentId);
+    }
+    
+    // Calculate commission
+    const commissionRate = parseFloat(process.env.COMMISSION_RATE) || 0.10;
+    const commission = amount * commissionRate;
+    
+    // Create sale record
+    const sale = {
+      id: Date.now(),
+      agentId: agent ? agent.id : null,
+      agentName: agent ? agent.full_name : 'Direct Sale',
+      referralCode: referralCode || null,
+      amount: amount,
+      commission: agent ? commission : 0,
+      productName: productName,
+      trafficSource: trafficSource,
+      timestamp: timestamp,
+      ip: req.ip
+    };
+    
+    // Update agent stats
+    if (agent) {
+      agent.sales = (agent.sales || 0) + 1;
+      agent.totalCommissions = (agent.totalCommissions || 0) + commission;
+      console.log(`💰 Commission added to ${agent.full_name}: ₪${commission.toFixed(2)}`);
+      
+      // Send WhatsApp notification
+      try {
+        const message = generateSaleNotificationMessage(agent, amount, commission, productName);
+        await sendWhatsAppMessage(agent.phone, message);
+      } catch (whatsappError) {
+        console.error('⚠️ Failed to send sale notification:', whatsappError);
+      }
+    }
+    
+    // Add sale to sales array
+    sales.push(sale);
+    
+    // Save data
+    await saveAgents(agents);
+    await saveSales(sales);
+    
+    // Log the sale for analytics
+    console.log('📊 Sale Analytics:', JSON.stringify(sale, null, 2));
+    
+    res.json({ 
+      success: true, 
+      message: 'Sale tracked successfully',
+      saleId: sale.id,
+      commission: agent ? commission : 0,
+      trafficSource: trafficSource.source
+    });
+    
+  } catch (error) {
+    console.error('❌ Error tracking sale:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to track sale' 
+    });
+  }
+});
+
+// Get traffic source analytics
+app.get('/api/analytics/traffic-sources', authenticate, async (req, res) => {
+  try {
+    // This is a basic implementation - you can expand this with proper database queries
+    // For now, we'll return mock data structure
+    
+    const analytics = {
+      sources: {
+        facebook: { visits: 0, sales: 0, revenue: 0 },
+        instagram: { visits: 0, sales: 0, revenue: 0 },
+        tiktok: { visits: 0, sales: 0, revenue: 0 },
+        google: { visits: 0, sales: 0, revenue: 0 },
+        whatsapp: { visits: 0, sales: 0, revenue: 0 },
+        direct: { visits: 0, sales: 0, revenue: 0 },
+        referral: { visits: 0, sales: 0, revenue: 0 }
+      },
+      totalVisits: 0,
+      totalSales: sales.length,
+      totalRevenue: sales.reduce((sum, sale) => sum + sale.amount, 0)
+    };
+    
+    // Calculate totals from existing data
+    agents.forEach(agent => {
+      analytics.totalVisits += agent.visits || 0;
+    });
+    
+    res.json({
+      success: true,
+      analytics: analytics,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching analytics:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch analytics' 
+    });
+  }
+});
+
 // Static files already configured above
 
 // 404 handler

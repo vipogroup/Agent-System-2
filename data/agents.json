@@ -11,7 +11,8 @@
     "totalCommissions": 0,
     "visits": 0,
     "sales": 0,
-    "created_at": "2025-10-10T14:12:16.785Z"
+    "created_at": "2025-10-10T14:12:16.785Z",
+    "todayVisits": 0
   },
   {
     "id": 2,
@@ -25,7 +26,8 @@
     "totalCommissions": 0,
     "visits": 0,
     "sales": 0,
-    "created_at": "2025-10-10T14:12:16.905Z"
+    "created_at": "2025-10-10T14:12:16.905Z",
+    "todayVisits": 0
   },
   {
     "id": 3,
@@ -36,6 +38,7 @@
     "referral_code": "DAVID2024",
     "is_active": false,
     "role": "agent",
-    "totalCommissions": 0
+    "totalCommissions": 0,
+    "todayVisits": 0
   }
 ]
