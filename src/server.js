@@ -10,13 +10,33 @@ dotenv.config();
 
 const app = express();
 
-// Add async error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+// CORS configuration — allow GitHub Pages origin with credentials and proper preflight
+const ALLOWED_ORIGINS = new Set([
+  'https://vipogroup.github.io',
+  'http://localhost:3000'
+]);
+
+const corsOptions = {
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
+    cb(ALLOWED_ORIGINS.has(origin) ? null : new Error('Not allowed by CORS'), ALLOWED_ORIGINS.has(origin));
+  },
+  credentials: true,
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  optionsSuccessStatus: 204
+};
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Vary', 'Origin');
+  }
+  next();
 });
 
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 const limiter = rateLimit({ 

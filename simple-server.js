@@ -54,6 +54,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key-change-in-pr
 const corsOptions = {
   origin: function(origin, callback) {
     const allowedOrigins = [
+      'https://vipogroup.github.io',
       'https://agent-system-2.onrender.com',
       'http://localhost:3000',
       'http://localhost:8080',
@@ -70,8 +71,8 @@ const corsOptions = {
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+  // Note: do not set allowedHeaders statically; cors will reflect Access-Control-Request-Headers
 };
 
 // 🚦 Rate Limiting - Optimized for normal usage
@@ -253,7 +254,27 @@ app.use((req, res, next) => {
   next();
 });
 
+// Reflect credentials and vary for allowed origins; helpful for proxies/caches
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'https://vipogroup.github.io',
+    'https://agent-system-2.onrender.com',
+    'http://localhost:3000',
+    'http://localhost:8080',
+    'http://localhost:10000',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:10000'
+  ];
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Vary', 'Origin');
+  }
+  next();
+});
+
 app.use(cors(corsOptions));              // CORS protection
+app.options('*', cors(corsOptions));     // Handle preflight with same options
 app.use(generalLimiter);                 // Rate limiting
 app.use(cookieParser());                 // Cookie parsing
 app.use(express.json({ limit: '10mb' })); // JSON parsing with size limit
@@ -928,6 +949,50 @@ app.get('/api/agent/:id', (req, res) => {
       created_at: agent.created_at
     }
   });
+});
+
+// Design settings endpoint for static clients (GitHub Pages)
+app.get('/api/design', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      joinBtnColor: '#667eea',
+      headerBgColor: '#ffffff',
+      progressBarColor: '#667eea',
+      mainTitleColor: '#222222'
+    }
+  });
+});
+
+// Minimal products catalog for demo/shop
+const CATALOG_PRODUCTS = [
+  {
+    id: 1,
+    name: 'מוצר דוגמה 1',
+    price: 199,
+    originalPrice: 299,
+    discount: 33,
+    category: 'דוגמה',
+    image: 'https://via.placeholder.com/640x360?text=Product+1',
+    daysLeft: 7,
+    progress: 42,
+    groupBuy: { currentParticipants: 21, maxParticipants: 50 },
+    details: { images: ['https://via.placeholder.com/640x360?text=Product+1'] }
+  }
+];
+app.get('/api/products', (req, res) => {
+  res.json({ success: true, data: CATALOG_PRODUCTS });
+});
+app.post('/api/products/:id/join', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, phone } = req.body || {};
+    const txt = encodeURIComponent(`שלום! אני מעוניין להצטרף לרכישה הקבוצתית למוצר ${id}${name ? ' - ' + name : ''}.`);
+    const wa = `https://wa.me/${(phone||'0555545821').replace(/\D/g,'') || '0555545821'}?text=${txt}`;
+    res.json({ success: true, data: { whatsappUrl: wa } });
+  } catch (e) {
+    res.status(200).json({ success: true, data: {} });
+  }
 });
 
 // Get agent referral link
