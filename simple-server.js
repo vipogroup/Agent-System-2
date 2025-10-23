@@ -973,15 +973,42 @@ const CATALOG_PRODUCTS = [
     originalPrice: 299,
     discount: 33,
     category: 'דוגמה',
-    image: 'https://via.placeholder.com/640x360?text=Product+1',
-    daysLeft: 7,
-    progress: 42,
-    groupBuy: { currentParticipants: 21, maxParticipants: 50 },
-    details: { images: ['https://via.placeholder.com/640x360?text=Product+1'] }
+    image: 'https://placehold.co/640x360?text=Product+1',
+    stock: 34,
+    purchaseType: 'group',
+    shipping: { cost: 0 },
+    groupBuy: {
+      currentParticipants: 21,
+      maxParticipants: 50,
+      endDate: new Date(Date.now() + 7*24*60*60*1000).toISOString()
+    },
+    description: 'תיאור דוגמה של מוצר איכותי ברכישה קבוצתית.',
+    details: {
+      images: [
+        'https://placehold.co/640x360?text=Product+1',
+        'https://placehold.co/640x360?text=Product+1B',
+        'https://placehold.co/640x360?text=Product+1C'
+      ],
+      specifications: {
+        processor: 'Octa-Core 2.4GHz',
+        memory: '8GB',
+        storage: '128GB',
+        display: '6.5" FHD',
+        battery: '4500mAh'
+      },
+      inBox: ['מכשיר', 'מטען', 'כבל USB-C', 'מדריך'],
+      video: ''
+    }
   }
 ];
 app.get('/api/products', (req, res) => {
   res.json({ success: true, data: CATALOG_PRODUCTS });
+});
+app.get('/api/products/:id', (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const product = CATALOG_PRODUCTS.find(p => p.id === id);
+  if (!product) return res.status(404).json({ success: false, error: 'Product not found' });
+  res.json({ success: true, data: product });
 });
 app.post('/api/products/:id/join', (req, res) => {
   try {
